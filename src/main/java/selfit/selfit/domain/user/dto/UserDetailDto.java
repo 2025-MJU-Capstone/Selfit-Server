@@ -22,4 +22,5 @@ public class UserDetailDto {
         this.gender = gender;
         this.age = age;
     }
+
 }

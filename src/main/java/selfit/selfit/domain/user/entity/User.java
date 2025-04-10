@@ -40,4 +40,5 @@ public class User {
         this.create_date = LocalDateTime.now();
         this.update_date = LocalDateTime.now();
     }
+
 }

@@ -9,6 +9,7 @@ import java.util.Optional;
 
 @Service
 public interface UserService {
+
     User registerUser(UserAccountDto userAccountDto); // 계정 생성
     User updateUserDetails(Long userId, UserDetailDto userDetailDto); // 개인정보 등록
 }

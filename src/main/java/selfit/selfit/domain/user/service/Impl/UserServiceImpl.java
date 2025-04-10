@@ -102,8 +102,10 @@ public class UserServiceImpl implements UserService {
      */
 
     public String findPassword(String AccountId, String email){
+
         return userRepository.findByAccountIdAndEmail(AccountId, email).getPassword();
     }
+
 
     /**
      * 카카오 로그인

@@ -51,6 +51,7 @@ public class UserServiceImplTest {
     @Test
     @DisplayName("회원가입 중복 계정 검사 테스트")
     public void testDuplicateAccount(){
+
         //given
         UserAccountDto userAccountDto1 = new UserAccountDto();
         userAccountDto1.setAccountId("testAccount");
