@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class MapperException extends RuntimeException{
+public class MapperException extends Exception {
     private final ErrorCode errorCode;
 }
