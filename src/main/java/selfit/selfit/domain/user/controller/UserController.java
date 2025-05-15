@@ -3,19 +3,17 @@ package selfit.selfit.domain.user.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import selfit.selfit.domain.user.dto.UserAccountDto;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 import selfit.selfit.domain.user.dto.UserDetailDto;
+import selfit.selfit.domain.user.entity.User;
 import selfit.selfit.domain.user.service.UserService;
 import selfit.selfit.global.dto.ApiResult;
 
 @RestController
-@RequestMapping("api/user-info")
+@RequestMapping("/api/user")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -29,11 +27,30 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
 
-    @PostMapping("/save")
-    public ApiResult<String> save(@Valid @RequestBody UserAccountDto userAccountDto) {
-        userService.registerUser(userAccountDto);
-        return ApiResult.ok("회원가입 성공");
+    // 개인정보 등록
+    @PostMapping("/detail-form")
+    public ApiResult<User> registerDetailInfo(@RequestBody UserDetailDto userDetailDto) {
+        // 로그인 한 사용자는 jwt를 통해 securityContext에 저장되었으므로
+        // 안에 있는 accountId를 꺼내서 사용하면 된다.
+        // 위 코드는 @CurrentUser 대체 가능
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        User updateUser = userService.updateUserDetails(userDetailDto, auth.getName());
+
+        return ApiResult.ok("개인정보 등록 완료", updateUser);
     }
+//
+//    // 얼굴 아바타 생성
+//    @PostMapping("/face-avatar/generate")
+//    public ApiResult<User> generateAvatarFace(@RequestBody ) {
+//
+//    }
+//
+//    // 체형 아바타 생성
+//    @PostMapping("/body-avatar/generate")
+//    public ApiResult<User> generateAvatarBody(@RequestBody ) {
+//
+//    }
 
 
 }

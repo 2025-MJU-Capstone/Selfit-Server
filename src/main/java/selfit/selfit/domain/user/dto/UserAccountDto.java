@@ -1,10 +1,7 @@
 package selfit.selfit.domain.user.dto;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class UserAccountDto {
+    // 계정 생성 시 사용하는 DTO
 
     @NotBlank(message = "아이디를 입력하세요.")
     @Pattern(regexp = "^[a-zA-Z0-9]+$"

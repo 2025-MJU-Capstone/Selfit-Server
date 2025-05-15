@@ -1,5 +1,6 @@
 package selfit.selfit.global.exception;
 
+import org.springframework.security.core.AuthenticationException;
 import selfit.selfit.global.dto.ApiResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,4 +58,11 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(apiResult, HttpStatus.BAD_REQUEST);
 	}
 
+	// 로그인 뿐 아니라 스프링 시큐리티 전반에서 던져지는 인증 오류가 모두 401로 매핑
+	@ExceptionHandler(AuthenticationException.class)
+	public ResponseEntity<ApiResult<Void>> handleAuthException(AuthenticationException ex) {
+		return ResponseEntity
+				.status(HttpStatus.UNAUTHORIZED)
+				.body(ApiResult.withError(ErrorCode.INTERNAL_SERVER_ERROR));
+	}
 }

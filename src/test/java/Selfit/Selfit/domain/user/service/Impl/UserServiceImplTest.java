@@ -1,19 +1,23 @@
 package Selfit.Selfit.domain.user.service.Impl;
 
 
+import io.jsonwebtoken.security.Password;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import selfit.selfit.domain.user.dto.UserAccountDto;
 import selfit.selfit.domain.user.dto.UserDetailDto;
+import selfit.selfit.domain.user.dto.UserLoginRequestDto;
 import selfit.selfit.domain.user.entity.User;
 import selfit.selfit.domain.user.repository.UserRepository;
 import selfit.selfit.domain.user.service.UserService;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
@@ -36,10 +40,10 @@ public class UserServiceImplTest {
         User savedUser = userService.registerUser(userAccountDto);
 
         //then
-        Assertions.assertNotNull(savedUser.getId());
-        Assertions.assertEquals("testAccount", savedUser.getAccountId());
-        Assertions.assertTrue(passwordEncoder.matches("testPassword", savedUser.getPassword()));
-        Assertions.assertEquals("test@example.com", savedUser.getEmail());
+        assertNotNull(savedUser.getId());
+        assertEquals("testAccount", savedUser.getAccountId());
+        assertTrue(passwordEncoder.matches("testPassword", savedUser.getPassword()));
+        assertEquals("test@example.com", savedUser.getEmail());
 
 //        // db에 저장 되었는지 확인
 //        User foundUser = userRepository.findById(savedUser.getId())
@@ -51,7 +55,6 @@ public class UserServiceImplTest {
     @Test
     @DisplayName("회원가입 중복 계정 검사 테스트")
     public void testDuplicateAccount(){
-
         //given
         UserAccountDto userAccountDto1 = new UserAccountDto();
         userAccountDto1.setAccountId("testAccount");
@@ -67,7 +70,7 @@ public class UserServiceImplTest {
         userService.registerUser(userAccountDto1);
 
         //then
-        Assertions.assertThrows(IllegalArgumentException.class, () ->{
+        assertThrows(IllegalArgumentException.class, () ->{
             userService.registerUser(userAccountDto2);
         });
     }
@@ -90,13 +93,125 @@ public class UserServiceImplTest {
         userDetailDto.setGender("Male");
 
         //when
-        User updatedUser = userService.updateUserDetails(savedUser.getId(), userDetailDto);
+        User updatedUser = userService.updateUserDetails(userDetailDto, savedUser.getAccountId());
 
         //then
-        Assertions.assertNotNull(updatedUser);
-        Assertions.assertEquals("John Doe", updatedUser.getName());
-        Assertions.assertEquals(25, updatedUser.getAge());
-        Assertions.assertEquals("johnny", updatedUser.getNickname());
-        Assertions.assertEquals("Male", updatedUser.getGender());
+        assertNotNull(updatedUser);
+        assertEquals("John Doe", updatedUser.getName());
+        assertEquals(25, updatedUser.getAge());
+        assertEquals("johnny", updatedUser.getNickname());
+        assertEquals("Male", updatedUser.getGender());
+    }
+
+    @Test
+    @DisplayName("로그인 인증 통합 테스트")
+    public void LoginTest(){
+        //회원가입
+//        UserAccountDto userAccountDto = new UserAccountDto();
+//        userAccountDto.setAccountId("testAccount");
+//        userAccountDto.setPassword("testPassword");
+//        userAccountDto.setEmail("test@example.com");
+//
+//        userService.registerUser(userAccountDto);
+//
+//        UserLoginRequestDto userLoginRequestDto = new UserLoginRequestDto();
+//        userLoginRequestDto.setAccountId("testAccount");
+//        userLoginRequestDto.setPassword("testPassword");
+//
+//        String s = userService.authenticationUser(userLoginRequestDto);
+//
+//        if(s != null){
+//            System.out.println("UserServiceImplTest.LoginTest Success");
+//        }
+//        else{
+//            System.out.println("UserServiceImplTest.LoginTest Failed");
+//        }
+    }
+
+    @Test
+    @DisplayName("아이디 찾기")
+    public void findIdTest(){
+        // 회원가입
+        UserAccountDto userAccountDto = new UserAccountDto();
+        userAccountDto.setAccountId("testAccount");
+        userAccountDto.setPassword("testPassword");
+        userAccountDto.setEmail("test@example.com");
+
+        User user = userService.registerUser(userAccountDto);
+
+        String email = userAccountDto.getEmail();
+//        String email = "test2@example.com"; // 실패하는 로직
+        String findAccount = userService.findAccountId(email);
+
+        assertThat(user.getAccountId()).isEqualTo(findAccount);
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 및 복구")
+    public void findPwdTest(){
+        // 회원가입
+        UserAccountDto userAccountDto = new UserAccountDto();
+        userAccountDto.setAccountId("testAccount");
+        userAccountDto.setPassword("testPassword");
+        userAccountDto.setEmail("test@example.com");
+
+        User user = userService.registerUser(userAccountDto);
+
+        String accountId = userAccountDto.getAccountId();
+        String email = userAccountDto.getEmail();
+
+        String tempPwd = userService.recoverPassword(accountId, email);
+
+        assertTrue(passwordEncoder.matches(tempPwd, user.getPassword()));
+
+        System.out.println("userPwd = " + user.getPassword());
+
+        String newPwd = "realPassword";
+
+        userService.resetPassword(accountId, user.getPassword(), newPwd);
+
+        assertTrue(passwordEncoder.matches(newPwd, user.getPassword()));
+
+        System.out.println("userPwd = " + user.getPassword());
+    }
+
+    @Test
+    @DisplayName("닉네임 중복 확인")
+    public void duplicateNicknameTest(){
+        // 회원가입
+        UserAccountDto userAccountDto1 = new UserAccountDto();
+        userAccountDto1.setAccountId("testAccount1");
+        userAccountDto1.setPassword("testPassword1");
+        userAccountDto1.setEmail("test1@example.com");
+
+        User user1 = userService.registerUser(userAccountDto1);
+
+        // 개인정보 등록
+        UserDetailDto userDetailDto1 = new UserDetailDto();
+        userDetailDto1.setName("John Doe");
+        userDetailDto1.setAge(25);
+        userDetailDto1.setNickname("johnny");
+        userDetailDto1.setGender("Male");
+
+        User updateUser1 = userService.updateUserDetails(userDetailDto1, user1.getAccountId());
+
+
+        // 회원가입
+        UserAccountDto userAccountDto2 = new UserAccountDto();
+        userAccountDto2.setAccountId("testAccount2");
+        userAccountDto2.setPassword("testPassword2");
+        userAccountDto2.setEmail("test2@example.com");
+
+        User user2 = userService.registerUser(userAccountDto2);
+
+        // 개인정보 등록
+        UserDetailDto userDetailDto2 = new UserDetailDto();
+        userDetailDto2.setName("kim");
+        userDetailDto2.setAge(21);
+        userDetailDto2.setNickname("lego");
+        userDetailDto2.setGender("FeMale");
+
+        User updateUser2 = userService.updateUserDetails(userDetailDto2, user2.getAccountId());
+
     }
 }
