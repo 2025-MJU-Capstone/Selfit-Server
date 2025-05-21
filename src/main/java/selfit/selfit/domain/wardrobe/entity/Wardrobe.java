@@ -20,7 +20,7 @@ public class Wardrobe {
     private Date update_date;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
     @Builder

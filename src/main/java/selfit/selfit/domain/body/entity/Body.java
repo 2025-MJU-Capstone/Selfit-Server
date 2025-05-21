@@ -3,7 +3,8 @@ package selfit.selfit.domain.body.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import selfit.selfit.domain.user.entity.User;
-
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Date;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -16,7 +17,6 @@ public class Body {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @MapsId
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
@@ -40,4 +40,5 @@ public class Body {
         this.create_date = new Date();
         this.update_date = new Date();
     }
+
 }

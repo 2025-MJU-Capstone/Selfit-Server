@@ -3,17 +3,15 @@ package selfit.selfit.domain.user.service.Impl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import selfit.selfit.domain.body.entity.Body;
 import selfit.selfit.domain.user.dto.UserAccountDto;
 import selfit.selfit.domain.user.dto.UserDetailDto;
-import selfit.selfit.domain.user.dto.UserLoginRequestDto;
 import selfit.selfit.domain.user.entity.User;
 import selfit.selfit.domain.user.repository.UserRepository;
 import selfit.selfit.domain.user.service.UserService;
-import selfit.selfit.global.security.jwt.TokenProvider;
+import selfit.selfit.domain.wardrobe.entity.Wardrobe;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -144,11 +142,11 @@ public class UserServiceImpl implements UserService {
     /**
      *  비밀번호 재설정
      */
-    public void resetPassword(String accountId, String temporaryPassword, String newPassword){
+    public void resetPassword(String accountId, String temporaryPassword, String newPassword, String newPwd){
         User user = findUser(accountId);
 
         if(user.getPassword().equals(temporaryPassword)){
-            user.setPassword(passwordEncoder.encode(newPassword));
+            user.setPassword(passwordEncoder.encode(newPwd));
             userRepository.save(user);
         }
         else{

@@ -14,5 +14,6 @@ public class UserLoginResponseDto {
     private String accountId;
     private String nickname;
     private String email;
-    private String jwt; // 토큰 정보
+    private String accessToken; // access token
+    private String refreshToken; // refresh token
 }

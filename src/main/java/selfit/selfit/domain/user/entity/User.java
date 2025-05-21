@@ -2,6 +2,8 @@ package selfit.selfit.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import selfit.selfit.domain.body.entity.Body;
+import selfit.selfit.domain.wardrobe.entity.Wardrobe;
 
 import java.time.LocalDateTime;
 

@@ -34,13 +34,13 @@ public class TokenProvider {
     private String secret;
 
     @Value("${jwt.access-expiration}")
-    private long validityMs;
+    private Long accessTokenExpiration;
+
+    @Value("${jwt.refresh-expiration}")
+    private Long refreshTokenExpiration;
 
     private SecretKey key;
     private final CustomUserDetailsService customUserDetailsService;
-//    @Value("${jwt.refresh-expiration}")
-//    private long refreshTokenExpiration;
-
 
     @PostConstruct
     public void init(){
@@ -48,7 +48,7 @@ public class TokenProvider {
         key = Keys.hmacShaKeyFor(bytes);
     }
 
-    public String createToken(Authentication authentication){
+    public String createAccessToken(Authentication authentication){
         Date now = new Date();
         String accountId = authentication.getName();
 
@@ -61,7 +61,25 @@ public class TokenProvider {
                 .subject(accountId)
                 .claim("roles", roles)
                 .issuedAt(now)
-                .expiration(new Date(now.getTime()+validityMs))
+                .expiration(new Date(now.getTime()+accessTokenExpiration))
+                .signWith(key, Jwts.SIG.HS512)
+                .compact();
+    }
+
+    public String createRefreshToken(Authentication authentication){
+        Date now = new Date();
+        String accountId = authentication.getName();
+
+        List<String> roles = authentication.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+        return Jwts.builder()
+                .subject(accountId)
+                .claim("roles", roles)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime()+refreshTokenExpiration))
                 .signWith(key, Jwts.SIG.HS512)
                 .compact();
     }

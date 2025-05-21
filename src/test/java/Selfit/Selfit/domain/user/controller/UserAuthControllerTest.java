@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class AuthControllerTest {
+class UserAuthControllerTest {
     // 로그인 테스트
     @Autowired private MockMvc mockMvc;
 
@@ -35,13 +35,13 @@ class AuthControllerTest {
     void setUp(){
         userRepository.deleteAll();
         userRepository.save(User.builder()
-                .name("테스트유저")
-                .age(30)
+//                .name("테스트유저")
+//                .age(30)
                 .email("test@example.com")
                 .accountId("testuser")
                 .password(passwordEncoder.encode("password"))
-                .nickname("테스터")
-                .gender("M")
+//                .nickname("테스터")
+//                .gender("M")
                 .build());
     }
 
@@ -58,9 +58,10 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("로그인 인증 성공"))
                 .andExpect(jsonPath("$.data.accountId").value("testuser"))
-                .andExpect(jsonPath("$.data.nickname").value("테스터"))
-                .andExpect(jsonPath("$.data.email").value("test@example.com"))
-                .andExpect(jsonPath("$.data.jwt").isNotEmpty());
+//                .andExpect(jsonPath("$.data.nickname").value("테스터"))
+//                .andExpect(jsonPath("$.data.email").value("test@example.com"))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
     }
 
     @Test

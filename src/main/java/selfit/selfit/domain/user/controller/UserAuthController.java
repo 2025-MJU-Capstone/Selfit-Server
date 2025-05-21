@@ -4,26 +4,24 @@ package selfit.selfit.domain.user.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import selfit.selfit.domain.user.dto.LoginResponse;
 import selfit.selfit.domain.user.dto.UserAccountDto;
 import selfit.selfit.domain.user.dto.UserLoginRequestDto;
 import selfit.selfit.domain.user.dto.UserLoginResponseDto;
 import selfit.selfit.domain.user.entity.User;
 import selfit.selfit.domain.user.service.UserService;
 import selfit.selfit.global.dto.ApiResult;
-import selfit.selfit.global.exception.ErrorCode;
 import selfit.selfit.global.security.jwt.TokenProvider;
 import selfit.selfit.global.security.springsecurity.CustomUserDetails;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
-public class AuthController {
+public class UserAuthController {
 
     private final AuthenticationManager authenticationManager;
     private final TokenProvider tokenProvider;
@@ -47,8 +45,12 @@ public class AuthController {
                 )
         );
 
+        // 인증 정보(SecurityContext) 저장 (선택 사항)
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
         // 2. 인증 성공 시 JWT 생성
-        String jwt = tokenProvider.createToken(authentication);
+        String accessToken = tokenProvider.createAccessToken(authentication);
+        String refreshToken = tokenProvider.createRefreshToken(authentication);
 
         // 3. Principal에서 User 정보 꺼내 DTO 생성
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -59,16 +61,10 @@ public class AuthController {
                 user.getAccountId(),
                 user.getNickname(),
                 user.getEmail(),
-                jwt);
+                accessToken,
+                refreshToken);
 
         return ApiResult.ok("로그인 인증 성공", userLoginResponseDto);
-
-//        // springSecurity 사용 시
-//        User user = userService.findUser(userLoginRequestDto.getAccountId());
-//        UserLoginResponseDto userDto = new UserLoginResponseDto(
-//                user.getId(), user.getAccountId(), user.getNickname(), user.getEmail());
-//
-//        return ApiResult.ok("로그인 인증 성공", userDto);
     }
 
     // 아이디 찾기
@@ -89,8 +85,8 @@ public class AuthController {
 
     // 비밀번호 재설정
     @PostMapping("/reset-password")
-    public ApiResult<?> resetPwd(@RequestParam String accountId, @RequestParam String password, @RequestParam String email) {
-        userService.resetPassword(accountId, password, email);
+    public ApiResult<?> resetPwd(@RequestParam String accountId, @RequestParam String password, @RequestParam String email, @RequestParam String newPwd) {
+        userService.resetPassword(accountId, password, email, newPwd);
 
         return ApiResult.ok("비밀번호 재설정 완료");
     }

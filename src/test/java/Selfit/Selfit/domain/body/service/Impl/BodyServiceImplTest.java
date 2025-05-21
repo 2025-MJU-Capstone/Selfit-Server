@@ -1,34 +1,43 @@
 package Selfit.Selfit.domain.body.service.Impl;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import selfit.selfit.domain.body.dto.BodySizeDto;
 import selfit.selfit.domain.body.entity.Body;
 import selfit.selfit.domain.body.repository.BodyRepository;
 import selfit.selfit.domain.body.service.BodyService;
+import selfit.selfit.domain.image.ImageFileStorageService;
 import selfit.selfit.domain.user.dto.UserAccountDto;
-import selfit.selfit.domain.user.dto.UserDetailDto;
 import selfit.selfit.domain.user.entity.User;
+import selfit.selfit.domain.user.repository.UserRepository;
 import selfit.selfit.domain.user.service.UserService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest
 @Transactional
 class BodyServiceImplTest {
 
-    @Autowired private BodyService bodyService;
     @Autowired private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private BodyRepository bodyRepository;
+
+    @Autowired
+    private ImageFileStorageService imageFileStorageService;
+
+    @Autowired private BodyService bodyService;
 
     @Test
     @DisplayName("초기 신체 정보 저장 테스트")
@@ -48,7 +57,8 @@ class BodyServiceImplTest {
 
         Body savedBody = bodyService.saveSize(user.getId(), dto);
 
-        assertThat(savedBody.getId()).isEqualTo(user.getId());
+        assertThat(savedBody.getId()).isNotNull();
+        assertThat(savedBody.getUser().getId()).isEqualTo(user.getId());
         assertThat(savedBody.getHeight()).isEqualTo(dto.getHeight());
         assertThat(savedBody.getWeight()).isEqualTo(dto.getWeight());
         assertThat(savedBody.getWaist()).isEqualTo(dto.getWaist());
@@ -72,4 +82,5 @@ class BodyServiceImplTest {
         assertThat(b2.getWeight()).isEqualTo("68kg");
         assertThat(b2.getWaist()).isEqualTo("41ch");
     }
+
 }

@@ -1,8 +1,6 @@
 package Selfit.Selfit.domain.user.service.Impl;
 
 
-import io.jsonwebtoken.security.Password;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +9,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import selfit.selfit.domain.user.dto.UserAccountDto;
 import selfit.selfit.domain.user.dto.UserDetailDto;
-import selfit.selfit.domain.user.dto.UserLoginRequestDto;
 import selfit.selfit.domain.user.entity.User;
 import selfit.selfit.domain.user.repository.UserRepository;
 import selfit.selfit.domain.user.service.UserService;
@@ -104,28 +101,39 @@ public class UserServiceImplTest {
     }
 
     @Test
-    @DisplayName("로그인 인증 통합 테스트")
-    public void LoginTest(){
-        //회원가입
-//        UserAccountDto userAccountDto = new UserAccountDto();
-//        userAccountDto.setAccountId("testAccount");
-//        userAccountDto.setPassword("testPassword");
-//        userAccountDto.setEmail("test@example.com");
-//
-//        userService.registerUser(userAccountDto);
-//
-//        UserLoginRequestDto userLoginRequestDto = new UserLoginRequestDto();
-//        userLoginRequestDto.setAccountId("testAccount");
-//        userLoginRequestDto.setPassword("testPassword");
-//
-//        String s = userService.authenticationUser(userLoginRequestDto);
-//
-//        if(s != null){
-//            System.out.println("UserServiceImplTest.LoginTest Success");
-//        }
-//        else{
-//            System.out.println("UserServiceImplTest.LoginTest Failed");
-//        }
+    @DisplayName("개인정보 변경 통합 테스트")
+    public void testUpdateUserDetails1(){
+        //given
+        UserAccountDto userAccountDto = new UserAccountDto();
+        userAccountDto.setAccountId("testAccount");
+        userAccountDto.setPassword("testPassword");
+        userAccountDto.setEmail("test@example.com");
+
+        User savedUser = userService.registerUser(userAccountDto);
+
+        UserDetailDto userDetailDto = new UserDetailDto();
+        userDetailDto.setName("John Doe");
+        userDetailDto.setAge(25);
+        userDetailDto.setNickname("johnny");
+        userDetailDto.setGender("Male");
+
+        //when
+        User updatedUser = userService.updateUserDetails(userDetailDto, savedUser.getAccountId());
+
+        UserDetailDto userDetailDto1 = new UserDetailDto();
+        userDetailDto1.setName("hot");
+        userDetailDto1.setAge(48);
+        userDetailDto1.setNickname("less");
+        userDetailDto1.setGender("Female");
+
+        updatedUser = userService.updateUserDetails(userDetailDto1, savedUser.getAccountId());
+
+        //then
+        assertNotNull(updatedUser);
+        assertEquals("hot", updatedUser.getName());
+        assertEquals(48, updatedUser.getAge());
+        assertEquals("less", updatedUser.getNickname());
+        assertEquals("Female", updatedUser.getGender());
     }
 
     @Test
@@ -168,7 +176,7 @@ public class UserServiceImplTest {
 
         String newPwd = "realPassword";
 
-        userService.resetPassword(accountId, user.getPassword(), newPwd);
+        userService.resetPassword(accountId, user.getPassword(), newPwd, newPwd);
 
         assertTrue(passwordEncoder.matches(newPwd, user.getPassword()));
 
