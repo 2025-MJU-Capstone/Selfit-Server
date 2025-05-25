@@ -29,10 +29,9 @@ public class UserAuthController {
 
     // 회원가입
     @PostMapping("/save")
-    public ApiResult<User> save(@Valid @RequestBody UserAccountDto userAccountDto){
-        User user = userService.registerUser(userAccountDto);
-
-        return ApiResult.ok("회원가입 성공", user);
+    public ApiResult<String> save(@Valid @RequestBody UserAccountDto userAccountDto){
+        userService.registerUser(userAccountDto);
+        return ApiResult.ok(userAccountDto.getAccountId() + "님, 회원가입 성공");
     }
 
     // 로그인
@@ -92,4 +91,4 @@ public class UserAuthController {
     }
 
 
-    }
+}

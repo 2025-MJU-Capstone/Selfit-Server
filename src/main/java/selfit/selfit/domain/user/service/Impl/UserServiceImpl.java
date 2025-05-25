@@ -6,12 +6,14 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import selfit.selfit.domain.body.entity.Body;
+import selfit.selfit.domain.body.repository.BodyRepository;
 import selfit.selfit.domain.user.dto.UserAccountDto;
 import selfit.selfit.domain.user.dto.UserDetailDto;
 import selfit.selfit.domain.user.entity.User;
 import selfit.selfit.domain.user.repository.UserRepository;
 import selfit.selfit.domain.user.service.UserService;
 import selfit.selfit.domain.wardrobe.entity.Wardrobe;
+import selfit.selfit.domain.wardrobe.repository.WardrobeRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +24,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    private final WardrobeRepository wardrobeRepository;
+    private final BodyRepository bodyRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -42,6 +46,17 @@ public class UserServiceImpl implements UserService {
                 .password(passwordEncoder.encode(userAccountDto.getPassword()))
                 .email(userAccountDto.getEmail())
                 .build();
+
+        Body body = Body.builder()
+                .user(user)
+                .build();
+
+        Wardrobe wardrobe = Wardrobe.builder()
+                .user(user)
+                .build();
+
+        user.setWardrobe(wardrobe);
+        user.setBody(body);
 
         return userRepository.save(user);
     }

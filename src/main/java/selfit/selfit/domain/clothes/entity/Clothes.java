@@ -26,31 +26,21 @@ public class Clothes {
     private Date update_date;
 
     @Enumerated(EnumType.STRING)
-    @JoinColumn(nullable = false)
+    @JoinColumn(name = "type", nullable = false)
     private ClothesType type;
 
-    @ElementCollection
-    @CollectionTable(
-            name = "clothes_photos",
-            joinColumns = @JoinColumn(name = "clothes_id")
-    )
-    @Column(name = "photo_file", nullable = false)
-    private List<String> photoFiles = new ArrayList<>(); // 사진 경로
+    @Column(name = "file_path", nullable = false)
+    private String file_path;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "wardrobe_id")
+    @JoinColumn(name = "wardrobe_id", nullable = false)
     private Wardrobe wardrobe;
 
     @Builder
-    public Clothes(Wardrobe wardrobe, ClothesType type) {
-        this.wardrobe = wardrobe;
+    public Clothes(String file_path, ClothesType type) {
+        this.file_path = file_path;
         this.type = type;
         this.create_date = new Date();
-        this.update_date = new Date();
-    }
-
-    public void addPhotoFile(String path){
-        photoFiles.add(path);
         this.update_date = new Date();
     }
 }

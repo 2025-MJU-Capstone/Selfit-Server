@@ -37,12 +37,7 @@ public class BodyServiceImpl implements BodyService {
         User user = getUserByUserId(userId);
 
         Body body = bodyRepository.findByUser(user)
-                .orElseGet(() -> {
-                    Body b = Body.builder()
-                            .user(user)         // user_id 매핑
-                            .build();
-                    return b;
-                });
+                .orElseThrow(() -> new IllegalArgumentException("신체 정보가 없습니다."));
 
         body.setHeight(bodySizeDto.getHeight());
         body.setWeight(bodySizeDto.getWeight());

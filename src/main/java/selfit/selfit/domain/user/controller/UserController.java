@@ -32,7 +32,7 @@ public class UserController {
 
     // 개인정보 등록
     @PostMapping("/detail-form")
-    public ApiResult<User> registerDetailInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails,
+    public ApiResult<UserDetailDto> registerDetailInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails,
                                               @RequestBody UserDetailDto userDetailDto) {
         // 로그인 한 사용자는 jwt를 통해 securityContext에 저장되었으므로
         // 안에 있는 accountId를 꺼내서 사용하면 된다.
@@ -40,10 +40,9 @@ public class UserController {
 //        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         String accountId = customUserDetails.getUsername();
+        userService.updateUserDetails(userDetailDto, accountId);
 
-        User updateUser = userService.updateUserDetails(userDetailDto, accountId);
-
-        return ApiResult.ok("개인정보 등록 완료", updateUser);
+        return ApiResult.ok("개인정보 등록 완료", userDetailDto);
     }
 
 

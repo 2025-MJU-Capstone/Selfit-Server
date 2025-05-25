@@ -29,6 +29,22 @@ public class User {
     private LocalDateTime create_date;
     private LocalDateTime update_date;
 
+    @OneToOne(
+            mappedBy = "user",
+            cascade   = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch     = FetchType.LAZY
+    )
+    private Wardrobe wardrobe;
+
+    @OneToOne(
+            mappedBy = "user",
+            cascade   = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch     = FetchType.LAZY
+    )
+    private Body body;
+
     @Builder
     public User(String name, int age, String email, String accountId, String password, String nickname, String gender) {
         this.name = name;

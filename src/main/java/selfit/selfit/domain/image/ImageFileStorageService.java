@@ -7,6 +7,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -70,5 +71,14 @@ public class ImageFileStorageService {
     public String getFilePath(String filename) {
         // 만약 외부 URL을 쓰고 싶다면 이곳에서 변형할 수 있습니다.
         return rootLocation.resolve(filename).toString();
+    }
+
+    public void delete(String path) {
+        try{
+            Path file = Paths.get(path);
+            Files.deleteIfExists(file);
+        }catch (IOException e){
+            throw new UncheckedIOException("Failed to delete file: " + path, e);
+        }
     }
 }

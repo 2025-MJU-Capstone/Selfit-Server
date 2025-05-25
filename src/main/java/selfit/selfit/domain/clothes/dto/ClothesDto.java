@@ -8,8 +8,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-public class ClothesPhotoFileDto {
-    private String filePath;
-    private String fileName;
+public class ClothesDto {
+    private String path;
     private ClothesType type;
 }
