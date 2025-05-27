@@ -24,8 +24,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final WardrobeRepository wardrobeRepository;
-    private final BodyRepository bodyRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -168,16 +166,5 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("유효하지 않은 비밀번호 입니다.");
         }
     }
-
-
-    /**
-     *  아이디와 비밀번호 인증 (로그인) SpringSecurity + jwt 사용
-     */
-
-
-    /**
-     * 카카오 로그인
-     */
-
 
 }

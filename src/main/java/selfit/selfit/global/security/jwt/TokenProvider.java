@@ -11,16 +11,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import selfit.selfit.global.security.springsecurity.CustomUserDetails;
 import selfit.selfit.global.security.springsecurity.CustomUserDetailsService;
 
 import javax.crypto.SecretKey;
-import java.security.Key;
-import java.util.Base64;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -111,8 +106,6 @@ public class TokenProvider {
                 .collect(Collectors.toList());
 
         return new UsernamePasswordAuthenticationToken(userDetails, token, auths);
-
-
     }
 
     // 토큰 유효성 검증(Access, Refresh 동일하게 사용)

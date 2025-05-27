@@ -1,9 +1,6 @@
 package selfit.selfit.domain.body.dto;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.ArrayList;
 
@@ -15,11 +12,9 @@ public class BodySizeDto {
     private String height;
     private String weight;
     private String waist;
+    private String leg;
+    private String shoulder;
+    private String pelvis;
+    private String chest;
 
-    @Builder
-    public BodySizeDto(String height, String weight, String waist) {
-        this.height = height;
-        this.weight = weight;
-        this.waist = waist;
-    }
 }

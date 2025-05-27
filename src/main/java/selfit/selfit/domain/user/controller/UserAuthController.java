@@ -37,6 +37,10 @@ public class UserAuthController {
     // 로그인
     @PostMapping("/login")
     public ApiResult<UserLoginResponseDto> login(@RequestBody UserLoginRequestDto userLoginRequestDto){
+        if(userLoginRequestDto == null){
+            throw new IllegalArgumentException("로그인에 필요한 정보가 없습니다.");
+        }
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         userLoginRequestDto.getAccountId(),

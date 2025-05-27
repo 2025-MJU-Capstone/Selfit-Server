@@ -53,7 +53,11 @@ class BodyServiceImplTest {
         BodySizeDto dto = new BodySizeDto();
         dto.setHeight("170cm");
         dto.setWeight("76kg");
-        dto.setWaist("42ch");
+        dto.setWaist("42inch");
+        dto.setLeg("62cm");
+        dto.setShoulder("56inch");
+        dto.setPelvis("32inch");
+        dto.setChest("64cm");
 
         Body savedBody = bodyService.saveSize(user.getId(), dto);
 
@@ -62,6 +66,10 @@ class BodyServiceImplTest {
         assertThat(savedBody.getHeight()).isEqualTo(dto.getHeight());
         assertThat(savedBody.getWeight()).isEqualTo(dto.getWeight());
         assertThat(savedBody.getWaist()).isEqualTo(dto.getWaist());
+        assertThat(savedBody.getLeg()).isEqualTo(dto.getLeg());
+        assertThat(savedBody.getShoulder()).isEqualTo(dto.getShoulder());
+        assertThat(savedBody.getPelvis()).isEqualTo(dto.getPelvis());
+        assertThat(savedBody.getChest()).isEqualTo(dto.getChest());
 
     }
     @Test
@@ -70,17 +78,32 @@ class BodyServiceImplTest {
         UserAccountDto uDto = new UserAccountDto("user2","pw2","test2@example.com");
         User user = userService.registerUser(uDto);
 
-        BodySizeDto first = new BodySizeDto("165cm","65kg","40ch");
-        Body b1 = bodyService.saveSize(user.getId(), first);
+        BodySizeDto dto = new BodySizeDto();
+        dto.setHeight("170cm");
+        dto.setWeight("76kg");
+        dto.setWaist("42inch");
+        dto.setLeg("62cm");
+        dto.setShoulder("56inch");
+        dto.setPelvis("32inch");
+        dto.setChest("64cm");
+        bodyService.saveSize(user.getId(), dto);
 
-        BodySizeDto update = new BodySizeDto("168cm","68kg","41ch");
+        Body b1 = bodyService.saveSize(user.getId(), dto);
+
+        BodySizeDto update = new BodySizeDto();
+        update.setHeight("168cm");
+        update.setWeight("68kg");
+        update.setWaist("41inch");
+        update.setLeg("22cm");
+        update.setShoulder("325inch");
+        update.setPelvis("32inch");
+        update.setChest("78cm");
+
         Body b2 = bodyService.saveSize(user.getId(), update);
-
 
         assertThat(b2.getId()).isEqualTo(b1.getId());
         assertThat(b2.getHeight()).isEqualTo("168cm");
         assertThat(b2.getWeight()).isEqualTo("68kg");
-        assertThat(b2.getWaist()).isEqualTo("41ch");
+        assertThat(b2.getWaist()).isEqualTo("41inch");
     }
-
 }

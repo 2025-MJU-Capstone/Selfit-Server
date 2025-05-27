@@ -2,6 +2,7 @@ package selfit.selfit.domain.body.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import selfit.selfit.domain.body.dto.BodySizeDto;
 import selfit.selfit.domain.user.entity.User;
 import java.util.List;
 import java.util.ArrayList;
@@ -24,6 +25,10 @@ public class Body {
     private String height;
     private String weight;
     private String waist;
+    private String leg;
+    private String shoulder;
+    private String pelvis;
+    private String chest;
 
     @Column(name="create_date", nullable=false)
     private Date create_date;
@@ -32,13 +37,20 @@ public class Body {
     private Date update_date;
 
     @Builder
-    public Body(User user, String height, String weight, String waist) {
+    public Body(User user) {
         this.user       = user;
-        this.height     = height;
-        this.weight     = weight;
-        this.waist      = waist;
         this.create_date = new Date();
         this.update_date = new Date();
+    }
+
+    public void setSize(BodySizeDto dto){
+        setHeight(dto.getHeight());
+        setWeight(dto.getWeight());
+        setWaist(dto.getWaist());
+        setLeg(dto.getLeg());
+        setShoulder(dto.getShoulder());
+        setPelvis(dto.getPelvis());
+        setChest(dto.getChest());
     }
 
 }

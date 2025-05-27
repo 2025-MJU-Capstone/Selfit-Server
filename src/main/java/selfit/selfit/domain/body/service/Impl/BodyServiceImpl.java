@@ -39,12 +39,12 @@ public class BodyServiceImpl implements BodyService {
         Body body = bodyRepository.findByUser(user)
                 .orElseThrow(() -> new IllegalArgumentException("신체 정보가 없습니다."));
 
-        body.setHeight(bodySizeDto.getHeight());
-        body.setWeight(bodySizeDto.getWeight());
-        body.setWaist(bodySizeDto.getWaist());
-
+        body.setSize(bodySizeDto);
+        user.setBody(body);
+        userRepository.save(user);
         return bodyRepository.save(body);
     }
+
 //
 //    @Override
 //    public List<FaceFileDto> uploadFaceFiles(Long userId, List<MultipartFile> files) {

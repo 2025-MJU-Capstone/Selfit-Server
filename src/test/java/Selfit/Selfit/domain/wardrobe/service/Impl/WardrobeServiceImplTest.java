@@ -158,7 +158,7 @@ public class WardrobeServiceImplTest {
             System.out.println("Success");
         }
         else{
-            System.out.println("Falied");
+            System.out.println("Failed");
         }
 
         Path stored = uploadDir.resolve(c.getFile_path());
@@ -175,24 +175,35 @@ public class WardrobeServiceImplTest {
         byte[] content = "C:\\Users\\deukr\\Capstone\\Image\\imageFile.png".getBytes();
         MockMultipartFile file = new MockMultipartFile(
                 "file", "imageFile.png", MediaType.IMAGE_PNG_VALUE, content);
-        ClothesDto dto = clothesService.saveClothes(userId, ClothesType.TOP, file);
+        ClothesDto dto1 = clothesService.saveClothes(userId, ClothesType.TOP, file);
+        ClothesDto dto2 = clothesService.saveClothes(userId, ClothesType.TOP, file);
 
         Wardrobe wardrobe = wardrobeRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException(""));
 
-        Clothes findClothes = Clothes.builder()
-                .file_path(dto.getPath())
-                .type(dto.getType())
+        Clothes findClothes1 = Clothes.builder()
+                .file_path(dto1.getPath())
+                .type(dto1.getType())
                 .build();
 
-        findClothes.setWardrobe(wardrobe);
+        Clothes findClothes2 = Clothes.builder()
+                .file_path(dto2.getPath())
+                .type(dto2.getType())
+                .build();
 
-        Clothes c1 = clothesRepository.save(findClothes);
+        findClothes1.setWardrobe(wardrobe);
+        findClothes2.setWardrobe(wardrobe);
 
-        WardrobeDto dto1 = wardrobeService.saveClothes(userId, c1.getId());
+        Clothes c1 = clothesRepository.save(findClothes1);
+        Clothes c2 = clothesRepository.save(findClothes2);
 
-        WardrobeDto dto2 = wardrobeService.provideClothes(userId, findClothes.getId());
+        wardrobeService.saveClothes(userId, c1.getId());
+        wardrobeService.saveClothes(userId, c2.getId());
 
-        assertThat(dto1.getC()).isEqualTo(dto2.getC());
+        WardrobeDto wdto2 = wardrobeService.provideClothes(userId, findClothes1.getId());
+
+        assertThat(c1).isEqualTo(wdto2.getC());
+//        assertThat(c2).isEqualTo(wdto2.getC()); // 오류 발생해야함.
+
     }
 }

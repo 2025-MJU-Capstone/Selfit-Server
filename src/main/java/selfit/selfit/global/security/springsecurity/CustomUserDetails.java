@@ -3,18 +3,35 @@ package selfit.selfit.global.security.springsecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import selfit.selfit.domain.user.entity.User;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 
-public class CustomUserDetails implements UserDetails {
+public class CustomUserDetails implements OAuth2User, UserDetails {
 
     private final User user;
+    private Map<String, Object> attributes;
 
-    public CustomUserDetails(User user) {
+    public CustomUserDetails(User user, Map<String, Object> attributes) {
         this.user = user;
+        this.attributes = attributes;
+    }
+    public CustomUserDetails(User user){
+        this.user = user;
+    }
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
+
+    //OAuth2 로그인 후 “이 사용자”를 구분하는 ID
+    @Override
+    public String getName() {
+        return String.valueOf(user.getId());
     }
 
     @Override
@@ -63,4 +80,5 @@ public class CustomUserDetails implements UserDetails {
     public String getEmail(){
         return user.getEmail();
     }
+
 }

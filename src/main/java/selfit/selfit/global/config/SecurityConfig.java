@@ -1,9 +1,9 @@
 package selfit.selfit.global.config;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -11,7 +11,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -21,6 +20,9 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import selfit.selfit.global.security.jwt.JwtAuthenticationFilter;
 import selfit.selfit.global.security.jwt.TokenProvider;
+import selfit.selfit.global.security.oauth.CustomOAuth2UserService;
+import selfit.selfit.global.security.oauth.OAuth2LoginFailureHandler;
+import selfit.selfit.global.security.oauth.OAuth2LoginSuccessHandler;
 import selfit.selfit.global.security.springsecurity.CustomUserDetailsService;
 
 import java.util.List;
@@ -32,7 +34,9 @@ public class SecurityConfig{
 
     private final TokenProvider tokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
-
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
@@ -53,6 +57,7 @@ public class SecurityConfig{
 
         return authBuilder.build();
     }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -60,10 +65,31 @@ public class SecurityConfig{
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         // 인증, 인가 필요한 url 지정
-                        .requestMatchers("/api/auth/**", "/login").permitAll()    // 회원가입, 로그인은 인증 없이 가능
+                        // 카카오 로그인 시작 URI
+                        .requestMatchers("/oauth2/authorization/kakao").permitAll()
+                        // 카카오 콜백 URI
+                        .requestMatchers("/oauth2/login/kakao").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll() // 회원가입, 로그인은 인증 없이 가능
                         .anyRequest().authenticated()   // 그외의 모든 url은 인증 필요
                 )
                 .sessionManagement(sm->sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // OAuth2
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(ae -> ae
+                                .baseUri("/oauth2/authorization/{registrationId}")
+                        )
+                        .redirectionEndpoint(re -> re
+                                .baseUri("/oauth2/login/*")
+                        )
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler(oAuth2LoginFailureHandler)
+                )
+                // jwt 필터
+                .addFilterBefore(new JwtAuthenticationFilter(tokenProvider),
+                        UsernamePasswordAuthenticationFilter.class);
 //                .formLogin(form -> form
 //                        // form login 방식 적용
 //                        .usernameParameter("accountId")   // 로그인할 때 사용되는 id를 적어줌(여기서는 accounId로 로그인 하기 때문에 따로 적어줌. userName으로 로그인 한다면 적어주지 않아도 됨)
@@ -85,8 +111,6 @@ public class SecurityConfig{
 //                        .invalidateHttpSession(true)
 //                        .deleteCookies("JSESSIONID")
 //                )
-                .addFilterBefore(new JwtAuthenticationFilter(tokenProvider),
-                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
