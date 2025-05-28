@@ -18,6 +18,8 @@ import java.util.UUID;
 @Service
 public class ImageFileStorageService {
 
+    // 로컬 디렉토리 경로
+    // properties에 입력
     @Value("${file.upload-dir}")
     private String uploadDir;
 
@@ -47,7 +49,7 @@ public class ImageFileStorageService {
         }
 
         // UUID 기반 유니크 파일명 생성
-        String filename = UUID.randomUUID().toString() + ext;
+        String filename = UUID.randomUUID() + ext;
 
         try {
             if (file.isEmpty()) {

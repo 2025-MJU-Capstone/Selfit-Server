@@ -30,6 +30,18 @@ public class Body {
     private String pelvis;
     private String chest;
 
+    @ElementCollection
+    @CollectionTable(name = "full_body_photos",
+            joinColumns = @JoinColumn(name = "body_id"))
+    @Column(name = "full_body_path", nullable = false)
+    private List<String> fullBodyPhotos = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "face_photos",
+            joinColumns = @JoinColumn(name = "body_id"))
+    @Column(name = "face_path", nullable = false)
+    private List<String> facePhotos = new ArrayList<>();
+
     @Column(name="create_date", nullable=false)
     private Date create_date;
 
@@ -41,16 +53,6 @@ public class Body {
         this.user       = user;
         this.create_date = new Date();
         this.update_date = new Date();
-    }
-
-    public void setSize(BodySizeDto dto){
-        setHeight(dto.getHeight());
-        setWeight(dto.getWeight());
-        setWaist(dto.getWaist());
-        setLeg(dto.getLeg());
-        setShoulder(dto.getShoulder());
-        setPelvis(dto.getPelvis());
-        setChest(dto.getChest());
     }
 
 }

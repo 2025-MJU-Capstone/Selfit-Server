@@ -1,209 +1,139 @@
 package Selfit.Selfit.domain.wardrobe.service.Impl;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
-import org.springframework.http.MediaType;
+import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import selfit.selfit.domain.body.entity.Body;
-import selfit.selfit.domain.body.repository.BodyRepository;
-import selfit.selfit.domain.clothes.dto.ClothesDto;
-import selfit.selfit.domain.clothes.dto.ClothesType;
-import selfit.selfit.domain.clothes.entity.Clothes;
 import selfit.selfit.domain.clothes.repository.ClothesRepository;
-import selfit.selfit.domain.clothes.service.ClothesService;
+import selfit.selfit.domain.image.ImageFileStorageService;
 import selfit.selfit.domain.user.entity.User;
 import selfit.selfit.domain.user.repository.UserRepository;
-import selfit.selfit.domain.wardrobe.dto.WardrobeDto;
 import selfit.selfit.domain.wardrobe.entity.Wardrobe;
 import selfit.selfit.domain.wardrobe.repository.WardrobeRepository;
 import selfit.selfit.domain.wardrobe.service.WardrobeService;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@TestPropertySource(properties = "file.upload-dir=C:\\\\Users\\\\deukr\\\\Capstone\\\\Image")
+@SpringBootTest(properties = "file.upload-dir=${java.io.tmpdir}")
 @Transactional
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class WardrobeServiceImplTest {
 
-    @Autowired private BodyRepository bodyRepository;
-    @Autowired private ClothesService clothesService;
-    @Autowired private UserRepository userRepository;
-    @Autowired private ClothesRepository clothesRepository;
-    @Autowired private WardrobeRepository wardrobeRepository;
     @Autowired private WardrobeService wardrobeService;
-    @Autowired private Environment env;
+    @Autowired private UserRepository userRepository;
+    @Autowired private WardrobeRepository wardrobeRepository;
+    @Autowired private ClothesRepository clothesRepository;
+    @Autowired private ImageFileStorageService imageFileStorageService;
 
-    private Path uploadDir;
-    private Long userId;
+    private User user;
+
+    @TempDir
+    Path tempDir;
 
     @BeforeEach
-    public void setUp() throws Exception {
-        String dir = env.getProperty("file.upload-dir");
-        uploadDir = Paths.get(dir).toAbsolutePath().normalize();
+    void setUp() throws IOException {
+        Path uploadDir = tempDir.resolve("");
+        Files.createDirectories(uploadDir);
+        System.setProperty("file.upload-dir", uploadDir.toString());
 
-        if (Files.exists(uploadDir)) {
-            Files.walk(uploadDir)
-                    .filter(Files::isRegularFile)
-                    .forEach(p -> p.toFile().delete());
-        } else {
-            Files.createDirectories(uploadDir);
-        }
-
-        User user = User.builder()
-                .name("test")
-                .age(30)
-                .email("test@example.com")
-                .accountId("testAccount")
-                .password("testPwd")
-                .nickname("tester")
-                .gender("M")
-                .build();
-
-        Body body = Body.builder()
+        user = User.builder().accountId("testuser").password("pass").email("test@example.com").build();
+        Wardrobe w = Wardrobe.builder()
                 .user(user)
                 .build();
-
-        Wardrobe wardrobe = Wardrobe.builder()
-                .user(user)
-                .build();
-
-        user.setBody(body);
-        user.setWardrobe(wardrobe);
-
+        Body b = Body.builder().user(user).build();
+        user.setWardrobe(w);
+        user.setBody(b);
         userRepository.save(user);
-        userId = user.getId();
-
+        wardrobeRepository.save(w);
     }
 
     @Test
     @DisplayName("소장 의류 등록")
-    public void saveClothes() throws IOException {
-        byte[] content = "C:\\Users\\deukr\\Capstone\\Image\\imageFile.png".getBytes();
-        MockMultipartFile file = new MockMultipartFile(
-                "file", "imageFile.png", MediaType.IMAGE_PNG_VALUE, content);
+    void testSaveClothesWardrobe() throws IOException {
+        byte[] img1 = "Image".getBytes();
+        byte[] img2 = "Image".getBytes();
+        MultipartFile file1 = new MockMultipartFile("files", "a.png", "image/png", img1);
+        MultipartFile file2 = new MockMultipartFile("files", "b.jpg", "image/png", img2);
+        List<MultipartFile> files = List.of(file1, file2);
 
-        // when
-        ClothesDto dto = clothesService.saveClothes(userId, ClothesType.TOP, file);
+        List<String> paths = wardrobeService.saveClothes(user.getId(), files);
 
-        Wardrobe wardrobe = wardrobeRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException(""));
+        assertThat(paths).hasSize(2);
 
-        Clothes findClothes = Clothes.builder()
-                .file_path(dto.getPath())
-                .type(dto.getType())
-                .build();
-
-        findClothes.setWardrobe(wardrobe);
-
-        clothesRepository.save(findClothes);
-
-        WardrobeDto wardrobeDto = wardrobeService.saveClothes(userId, findClothes.getId());
-
-        if(wardrobeDto.getC().getFile_path().equals(findClothes.getFile_path()) && wardrobeDto.getC().getType()==findClothes.getType()){
-            System.out.println("Success");
-        }else{
-            System.out.println("Failed");
+        for (String pathStr : paths) {
+            Path p = Path.of(pathStr);
+            assertThat(Files.exists(p)).isTrue();
         }
 
+        Wardrobe updated = wardrobeRepository.findByUserId(user.getId()).orElseThrow();
+        assertThat(updated.getClothesPhotos()).containsExactlyInAnyOrderElementsOf(paths);
     }
 
     @Test
     @DisplayName("소장 의류 삭제")
-    public void deleteClothes() throws IOException {
-        byte[] content = "C:\\Users\\deukr\\Capstone\\Image\\imageFile.png".getBytes();
-        MockMultipartFile file = new MockMultipartFile(
-                "file", "imageFile.png", MediaType.IMAGE_PNG_VALUE, content);
+    void testDeleteClothesWardrobe() throws IOException {
+        byte[] img1 = "img1".getBytes();
+        byte[] img2 = "img2".getBytes();
 
-        // when
-        ClothesDto dto = clothesService.saveClothes(userId, ClothesType.TOP, file);
+        MultipartFile file1 = new MockMultipartFile("files", "x1.png", "image/png", img1);
+        MultipartFile file2 = new MockMultipartFile("files", "x2.png", "image/png", img2);
+        List<String> paths = wardrobeService.saveClothes(user.getId(), List.of(file1, file2));
+        String toDelete = paths.get(0);
+        assertThat(paths).contains(toDelete);
+        assertThat(Files.exists(Path.of(toDelete))).isTrue();
 
-        Wardrobe wardrobe = wardrobeRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException(""));
+        List<String> remaining = wardrobeService.deleteClothes(user.getId(), toDelete);
+        assertThat(remaining).doesNotContain(toDelete);
+        assertThat(Files.exists(Path.of(toDelete))).isFalse();
 
-        Clothes findClothes = Clothes.builder()
-                .file_path(dto.getPath())
-                .type(dto.getType())
-                .build();
+        Wardrobe updated = wardrobeRepository.findByUserId(user.getId()).orElseThrow();
+        assertThat(updated.getClothesPhotos()).doesNotContain(toDelete);
+    }
 
-        findClothes.setWardrobe(wardrobe);
 
-        clothesRepository.save(findClothes);
+    @Test
+    @DisplayName("소장 의류 리소스 제공")
+    void provideClothesResource() throws Exception {
+        // Upload a test image
+        byte[] data = "test-image-content".getBytes();
+        MultipartFile file = new MockMultipartFile(
+                "files", "sample.png", "image/png", data);
+        List<String> paths = wardrobeService.saveClothes(user.getId(), List.of(file));
+        assertFalse(paths.isEmpty());
+        String path = paths.get(0);
 
-        WardrobeDto wardrobeDto = wardrobeService.saveClothes(userId, findClothes.getId());
+        // Retrieve as Resource
+        Resource resource = wardrobeService.provideClothesResource(user.getId(), 0);
+        assertNotNull(resource);
+        assertTrue(resource.exists());
 
-        Clothes c = wardrobe.getClothesList().get(0);
-
-        wardrobeService.removeClothes(userId, findClothes.getId());
-
-        // then
-        if(wardrobe.getClothesList().isEmpty()){
-            System.out.println("Success");
+        // Compare file bytes
+        byte[] expected = Files.readAllBytes(Path.of(path));
+        try (InputStream is = resource.getInputStream()) {
+            byte[] actual = is.readAllBytes();
+            assertArrayEquals(expected, actual);
         }
-        else{
-            System.out.println("Failed");
-        }
-
-        Path stored = uploadDir.resolve(c.getFile_path());
-        assertThat(Files.exists(stored)).isTrue();
-
-
     }
 
     @Test
-    @DisplayName("소장 의류 제공")
-    public void provideClothes_shouldReturnCorrectDto() throws Exception {
-        // 먼저 save
-        // 이미지가 있는 로컬 파일 경로
-        byte[] content = "C:\\Users\\deukr\\Capstone\\Image\\imageFile.png".getBytes();
-        MockMultipartFile file = new MockMultipartFile(
-                "file", "imageFile.png", MediaType.IMAGE_PNG_VALUE, content);
-        ClothesDto dto1 = clothesService.saveClothes(userId, ClothesType.TOP, file);
-        ClothesDto dto2 = clothesService.saveClothes(userId, ClothesType.TOP, file);
-
-        Wardrobe wardrobe = wardrobeRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException(""));
-
-        Clothes findClothes1 = Clothes.builder()
-                .file_path(dto1.getPath())
-                .type(dto1.getType())
-                .build();
-
-        Clothes findClothes2 = Clothes.builder()
-                .file_path(dto2.getPath())
-                .type(dto2.getType())
-                .build();
-
-        findClothes1.setWardrobe(wardrobe);
-        findClothes2.setWardrobe(wardrobe);
-
-        Clothes c1 = clothesRepository.save(findClothes1);
-        Clothes c2 = clothesRepository.save(findClothes2);
-
-        wardrobeService.saveClothes(userId, c1.getId());
-        wardrobeService.saveClothes(userId, c2.getId());
-
-        WardrobeDto wdto2 = wardrobeService.provideClothes(userId, findClothes1.getId());
-
-        assertThat(c1).isEqualTo(wdto2.getC());
-//        assertThat(c2).isEqualTo(wdto2.getC()); // 오류 발생해야함.
-
+    @DisplayName("소장 의류 인덱스 적합 테스트")
+    void provideClothesResource_invalidIndex() {
+        // No files uploaded, index out of bounds
+        assertThrows(IllegalArgumentException.class, () ->
+                wardrobeService.provideClothesResource(user.getId(), 1)
+        );
     }
 }

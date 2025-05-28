@@ -1,6 +1,10 @@
 package selfit.selfit.domain.clothes.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,6 +17,8 @@ import selfit.selfit.global.dto.ApiResult;
 import selfit.selfit.global.security.springsecurity.CustomUserDetails;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @RestController
 @RequestMapping("/api/clothes")
@@ -24,30 +30,45 @@ public class ClothesController {
     /**
      *  옷 담기 등록
      */
-    @PostMapping("/register")
-    public ApiResult<ClothesDto> registerClothes(@RequestParam("type") ClothesType type,
+    @PostMapping("/upload")
+    public ApiResult<String> registerClothes(@RequestParam("type") ClothesType type,
                                                  @RequestParam("file") MultipartFile file,
                                                  @AuthenticationPrincipal CustomUserDetails customUserDetails) throws IOException{
 
         Long userId = customUserDetails.getId();
-        ClothesDto clothesDto = clothesService.saveClothes(userId, type, file);
-        return ApiResult.ok("담은 옷에 등록", clothesDto);
+        String path = clothesService.saveClothes(userId, type, file);
+        return ApiResult.ok("담은 옷 등록", path);
     }
 
     /**
      *  담은 옷 삭제
      */
-    @PostMapping("/delete")
-    public ApiResult<?> deleteClothes(@RequestParam("id") Long clothesId) throws IOException{
-        clothesService.deleteClothes(clothesId);
-        return ApiResult.ok("담은 옷 삭제", clothesId);
+    @DeleteMapping("/upload")
+    public ApiResult<String> deleteClothes(@RequestParam("path") String filePath) throws IOException{
+        String path = clothesService.deleteClothes(filePath);
+        return ApiResult.ok("담은 옷 삭제", path);
     }
 
     /**
-     *  담은 옷 제공
+     *  담은 옷 제공 (프론트에서 선택한
      */
-    @PostMapping("/get")
-    public ApiResult<ClothesDto> getClothes(@RequestParam("id") Long clothesId) throws IOException{
-        return ApiResult.ok("담은 옷 제공 성공", clothesService.provideClothes(clothesId));
+    @GetMapping("/upload")
+    public ResponseEntity<Resource> exportPhoto(@RequestParam("path") String filePath) {
+        Resource resource = clothesService.provideClothes(filePath);
+        // Content-Type 설정
+        String contentType;
+        try {
+            contentType = Files.probeContentType(Path.of(resource.getURI()));
+            if (contentType == null) {
+                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            }
+        } catch (Exception e) {
+            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=clothes_photo")
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(resource);
     }
 }

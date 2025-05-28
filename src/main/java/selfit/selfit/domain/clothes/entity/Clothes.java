@@ -29,16 +29,16 @@ public class Clothes {
     @JoinColumn(name = "type", nullable = false)
     private ClothesType type;
 
-    @Column(name = "file_path", nullable = false)
-    private String file_path;
+    @Column(name = "path", nullable = false)
+    private String path;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wardrobe_id", nullable = false)
     private Wardrobe wardrobe;
 
     @Builder
-    public Clothes(String file_path, ClothesType type) {
-        this.file_path = file_path;
+    public Clothes(String path, ClothesType type) {
+        this.path = path;
         this.type = type;
         this.create_date = new Date();
         this.update_date = new Date();

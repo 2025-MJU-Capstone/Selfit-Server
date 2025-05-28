@@ -5,11 +5,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import selfit.selfit.domain.body.dto.BodySizeDto;
-import selfit.selfit.domain.body.dto.FaceFileDto;
-import selfit.selfit.domain.body.entity.Body;
 import selfit.selfit.domain.body.service.BodyService;
 import selfit.selfit.domain.user.entity.User;
-import selfit.selfit.domain.user.service.UserService;
 import selfit.selfit.global.dto.ApiResult;
 import selfit.selfit.global.security.springsecurity.CustomUserDetails;
 
@@ -24,24 +21,26 @@ public class BodyController {
     private final BodyService bodyService;
 
     /**
-     * 로그인 한 사용자에 대한 얼굴 사진 업로드
+     * 로그인 한 사용자에 대한 전신 사진 업로드
      */
-//    @PostMapping("/face")
-//    public ApiResult<List<FaceFileDto>> uploadFace(@AuthenticationPrincipal CustomUserDetails customUserDetails,
-//                           @RequestParam("file") List<MultipartFile> files) throws IOException {
-//        Long userId = customUserDetails.getId();
-//        List<FaceFileDto> dtos = bodyService.uploadFaceFiles(userId, files);
-//        return ApiResult.ok(dtos);
-//    }
+    @PostMapping("/face")
+    public ApiResult<List<String>> uploadFullBody(@AuthenticationPrincipal CustomUserDetails customUserDetails,
+                           @RequestParam("files") List<MultipartFile> files) throws IOException {
+        User user = customUserDetails.getUser();
+
+        List<String> paths = bodyService.uploadFullBody(user, files);
+        return ApiResult.ok("전신 사진 업로드 성공", paths);
+    }
 
     /**
-     * 로그인 한 사용자에 대한 전신 체형 사진 업로드
+     * 로그인 한 사용자에 대한 얼굴 사진 업로드
      */
     @PostMapping("/shape")
-    public void uploadBodyShape(@RequestParam("file") List<MultipartFile> files,
+    public ApiResult<List<String>> uploadFace(@RequestParam("file") List<MultipartFile> files,
                            @AuthenticationPrincipal CustomUserDetails customUserDetails) throws IOException {
-        Long userId = customUserDetails.getId();
-
+        User user = customUserDetails.getUser();
+        List<String> paths = bodyService.uploadFace(user, files);
+        return ApiResult.ok("얼굴 사진 업로드 성공", paths);
     }
 
     /**

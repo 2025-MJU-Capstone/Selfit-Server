@@ -9,4 +9,5 @@ import java.util.Optional;
 
 public interface WardrobeRepository extends JpaRepository<Wardrobe, Long> {
     Optional<Wardrobe> findByUserId(Long userId);
+    Optional<Wardrobe> findByUser(User user);
 }

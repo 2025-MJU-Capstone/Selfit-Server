@@ -29,12 +29,11 @@ public class Wardrobe {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @OneToMany(
-            mappedBy = "wardrobe",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    private List<Clothes> clothesList = new ArrayList<>();
+    @ElementCollection
+    @CollectionTable(name = "clothes_photos",
+            joinColumns = @JoinColumn(name = "wardrobe_id"))
+    @Column(name = "clothes_path", nullable = false)
+    private List<String> clothesPhotos = new ArrayList<>();
 
     @Builder
     public Wardrobe(User user) {
