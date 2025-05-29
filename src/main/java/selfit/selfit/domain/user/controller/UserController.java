@@ -22,15 +22,12 @@ public class UserController {
 
     private final UserService userService;
 
-    //swagger 사용 예시
-    @Operation(summary = "유저 정보 저장", description = "주어진 유저 정보를 저장합니다.")
-    @ApiResponses(value = {
+    @Operation(summary = "유저 개인정보 저장", description = "주어진 유저 개인정보를 저장합니다.",
+    responses = {
             @ApiResponse(responseCode = "200", description = "성공적으로 저장됨"),
             @ApiResponse(responseCode = "400", description = "잘못된 입력 값"),
             @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
-
-    // 개인정보 등록
     @PostMapping("/detail-form")
     public ApiResult<UserDetailDto> registerDetailInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails,
                                               @RequestBody UserDetailDto userDetailDto) {

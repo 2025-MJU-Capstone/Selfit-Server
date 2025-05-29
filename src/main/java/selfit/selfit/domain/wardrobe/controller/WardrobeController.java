@@ -1,5 +1,10 @@
 package selfit.selfit.domain.wardrobe.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -29,9 +34,13 @@ public class WardrobeController {
 
     @Autowired private final WardrobeService wardrobeService;
 
-    /**
-     * 소장 의류 등록
-     */
+    @Operation(summary = "소장 의류 등록", description = "사용자가 소유한 옷의 이미지를 등록하고, 등록한 옷들의 경로를 반환합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "등록 성공"),
+                    @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+                    @ApiResponse(responseCode = "401", description = "인증 필요")
+            }
+    )
     @PostMapping("/photos")
     public ApiResult<List<String>> registerClothesFromWardrobe(@RequestParam("file") List<MultipartFile> files,
                                                               @AuthenticationPrincipal CustomUserDetails customUserDetails){
@@ -41,23 +50,33 @@ public class WardrobeController {
         return ApiResult.ok("소장 의류 등록 완료", paths);
     }
 
-    /**
-     * 소장 의류 삭제
-     */
+    @Operation(summary = "소장 의류 삭제", description = "사용자가 소장한 의류 중 index 위치의 사진을 삭제하고, 남은 사진 경로 리스트를 반환합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "삭제 성공"),
+                    @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+                    @ApiResponse(responseCode = "401", description = "인증 필요")
+            }
+    )
     @DeleteMapping("/photos/{index}")
-    public ApiResult<List<String>> deleteClothesFromWardrobe(@PathVariable int index,
-                                                  @AuthenticationPrincipal CustomUserDetails customUserDetails){
+    public ApiResult<List<String>> deleteClothesFromWardrobe(@Parameter(description = "삭제할 의류의 순서(0부터 시작)", example = "2")
+                                                                 @PathVariable int index,
+                                                                 @AuthenticationPrincipal CustomUserDetails customUserDetails){
         Long userId = customUserDetails.getId();
         List<String> remain = wardrobeService.deleteClothes(userId, index);
 
         return ApiResult.ok("소장 의류 삭제 완료", remain);
     }
 
-    /**
-     * 소장 의류 제공
-     */
+    @Operation(summary = "소장 의류 제공", description = "사용자가 소장한 의류 중 index 위치의 사진을 제공하고, 사진의 리소스를 반환합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "제공 성공"),
+                    @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+                    @ApiResponse(responseCode = "401", description = "인증 필요")
+            }
+    )
     @GetMapping("/photos/{index}")
-    public ResponseEntity<Resource> provideClothesFromWardrobe(@PathVariable int index,
+    public ResponseEntity<Resource> provideClothesFromWardrobe(@Parameter(description = "제공할 의류의 순서(0부터 시작)", example = "2")
+                                                                   @PathVariable int index,
                                                                @AuthenticationPrincipal CustomUserDetails customUserDetails) throws IOException {
         Long userId = customUserDetails.getId();
         Resource resource = wardrobeService.provideClothesResource(userId, index);

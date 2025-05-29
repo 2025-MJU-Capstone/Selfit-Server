@@ -1,6 +1,9 @@
 package selfit.selfit.domain.user.controller;
 
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
@@ -27,14 +30,24 @@ public class UserAuthController {
     private final TokenProvider tokenProvider;
     private final @Lazy UserService userService;
 
-    // 회원가입
+    @Operation(summary = "유저 회원가입", description = "주어진 정보를 토대로 회원가입 합니다.",
+            responses = {
+            @ApiResponse(responseCode = "200", description = "성공적으로 저장됨"),
+            @ApiResponse(responseCode = "400", description = "잘못된 입력 값"),
+            @ApiResponse(responseCode = "500", description = "서버 오류 발생")
+    })
     @PostMapping("/save")
     public ApiResult<String> save(@Valid @RequestBody UserAccountDto userAccountDto){
         userService.registerUser(userAccountDto);
         return ApiResult.ok(userAccountDto.getAccountId() + "님, 회원가입 성공");
     }
 
-    // 로그인
+    @Operation(summary = "유저 로그인", description = "유저가 로그인 합니다.",
+    responses = {
+            @ApiResponse(responseCode = "200", description = "성공적으로 로긍니됨"),
+            @ApiResponse(responseCode = "400", description = "잘못된 입력 값"),
+            @ApiResponse(responseCode = "500", description = "서버 오류 발생")
+    })
     @PostMapping("/login")
     public ApiResult<UserLoginResponseDto> login(@RequestBody UserLoginRequestDto userLoginRequestDto){
         if(userLoginRequestDto == null){
@@ -70,7 +83,12 @@ public class UserAuthController {
         return ApiResult.ok("로그인 인증 성공", userLoginResponseDto);
     }
 
-    // 아이디 찾기
+    @Operation(summary = "유저 아이디 찾기", description = "이메일 정보로 아이디를 찾습니다.",
+    responses = {
+            @ApiResponse(responseCode = "200", description = "성공적으로 찾음"),
+            @ApiResponse(responseCode = "400", description = "잘못된 입력 값"),
+            @ApiResponse(responseCode = "500", description = "서버 오류 발생")
+    })
     @PostMapping("/find-accountId")
     public ApiResult<String> findId(@RequestParam String email){
         String accountId = userService.findAccountId(email);
@@ -78,17 +96,27 @@ public class UserAuthController {
         return ApiResult.ok("아이디: ", accountId);
     }
 
-    // 임시 비밀번호 발급
+    @Operation(summary = "유저 임시 비밀번호 발급", description = "유저 비밀번호 찾기 중 임시 비밀번호 발급",
+    responses = {
+            @ApiResponse(responseCode = "200", description = "성공적으로 발급"),
+            @ApiResponse(responseCode = "400", description = "잘못된 입력 값"),
+            @ApiResponse(responseCode = "500", description = "서버 오류 발생")
+    })
     @PostMapping("/recover-password")
-    public ApiResult<?> recoverPwd(@RequestParam String accountId, @RequestParam String email){
+    public ApiResult<String> recoverPwd(@RequestParam String accountId, @RequestParam String email){
         String tempPwd = userService.recoverPassword(accountId, email);
 
         return ApiResult.ok("임시 비밀번호 발급 성공", tempPwd);
     }
 
-    // 비밀번호 재설정
+    @Operation(summary = "유저 비밀번호 재설정", description = "유저 비밀번호 찾기 중 비밀번호 재설정",
+    responses = {
+            @ApiResponse(responseCode = "200", description = "성공적으로 변경"),
+            @ApiResponse(responseCode = "400", description = "잘못된 입력 값"),
+            @ApiResponse(responseCode = "500", description = "서버 오류 발생")
+    })
     @PostMapping("/reset-password")
-    public ApiResult<?> resetPwd(@RequestParam String accountId, @RequestParam String password, @RequestParam String email, @RequestParam String newPwd) {
+    public ApiResult<String> resetPwd(@RequestParam String accountId, @RequestParam String password, @RequestParam String email, @RequestParam String newPwd) {
         userService.resetPassword(accountId, password, email, newPwd);
 
         return ApiResult.ok("비밀번호 재설정 완료");
