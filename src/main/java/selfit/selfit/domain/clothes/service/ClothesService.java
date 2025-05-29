@@ -7,9 +7,13 @@ import selfit.selfit.domain.clothes.dto.ClothesDto;
 import selfit.selfit.domain.clothes.dto.ClothesType;
 import selfit.selfit.domain.clothes.entity.Clothes;
 
+import java.net.MalformedURLException;
+import java.util.List;
+
 @Service
 public interface ClothesService {
     String saveClothes(Long userId, ClothesType type, MultipartFile file);
-    String deleteClothes(String path);
-    Resource provideClothes(String path);
+    List<String> deleteClothes(Long userId, int index);
+    Resource provideClothes(Long userId, int index) throws MalformedURLException;
+//    Resource provideClothes(String filePath);
 }

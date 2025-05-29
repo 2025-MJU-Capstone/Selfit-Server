@@ -3,6 +3,7 @@ package selfit.selfit.domain.clothes.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import selfit.selfit.domain.clothes.dto.ClothesType;
+import selfit.selfit.domain.user.entity.User;
 import selfit.selfit.domain.wardrobe.entity.Wardrobe;
 
 import java.util.ArrayList;
@@ -33,8 +34,8 @@ public class Clothes {
     private String path;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "wardrobe_id", nullable = false)
-    private Wardrobe wardrobe;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Builder
     public Clothes(String path, ClothesType type) {

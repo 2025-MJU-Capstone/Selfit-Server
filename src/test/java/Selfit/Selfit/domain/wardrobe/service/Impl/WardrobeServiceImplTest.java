@@ -23,19 +23,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(properties = "file.upload-dir=${java.io.tmpdir}")
+@SpringBootTest(properties = "file.upload-dir=${java.io.tmpdir}/wardrobe-test")
 @Transactional
 public class WardrobeServiceImplTest {
 
     @Autowired private WardrobeService wardrobeService;
     @Autowired private UserRepository userRepository;
     @Autowired private WardrobeRepository wardrobeRepository;
-    @Autowired private ClothesRepository clothesRepository;
     @Autowired private ImageFileStorageService imageFileStorageService;
 
     private User user;
@@ -45,93 +45,84 @@ public class WardrobeServiceImplTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        Path uploadDir = tempDir.resolve("");
+        // configure upload directory
+        Path uploadDir = tempDir.resolve("wardrobe-test");
         Files.createDirectories(uploadDir);
         System.setProperty("file.upload-dir", uploadDir.toString());
 
-        user = User.builder().accountId("testuser").password("pass").email("test@example.com").build();
-        Wardrobe w = Wardrobe.builder()
-                .user(user)
+        // create test user and wardrobe
+        user = User.builder()
+                .accountId("testuser")
+                .password("password")
+                .email("test@example.com")
                 .build();
-        Body b = Body.builder().user(user).build();
+        Wardrobe w = Wardrobe.builder().user(user).build();
         user.setWardrobe(w);
-        user.setBody(b);
         userRepository.save(user);
         wardrobeRepository.save(w);
     }
 
     @Test
     @DisplayName("소장 의류 등록")
-    void testSaveClothesWardrobe() throws IOException {
-        byte[] img1 = "Image".getBytes();
-        byte[] img2 = "Image".getBytes();
-        MultipartFile file1 = new MockMultipartFile("files", "a.png", "image/png", img1);
-        MultipartFile file2 = new MockMultipartFile("files", "b.jpg", "image/png", img2);
-        List<MultipartFile> files = List.of(file1, file2);
+    void saveClothes() throws IOException {
+        MultipartFile f1 = new MockMultipartFile("files", "one.png", "image/png", "data1".getBytes());
+        MultipartFile f2 = new MockMultipartFile("files", "two.jpg", "image/jpeg", "data2".getBytes());
+        List<MultipartFile> files = Arrays.asList(f1, f2);
 
         List<String> paths = wardrobeService.saveClothes(user.getId(), files);
 
         assertThat(paths).hasSize(2);
 
-        for (String pathStr : paths) {
-            Path p = Path.of(pathStr);
-            assertThat(Files.exists(p)).isTrue();
+        for (String p : paths) {
+            assertThat(Files.exists(Path.of(p))).isTrue();
         }
 
         Wardrobe updated = wardrobeRepository.findByUserId(user.getId()).orElseThrow();
-        assertThat(updated.getClothesPhotos()).containsExactlyInAnyOrderElementsOf(paths);
+        assertThat(updated.getClothesPhotos()).containsExactlyElementsOf(paths);
     }
 
     @Test
     @DisplayName("소장 의류 삭제")
-    void testDeleteClothesWardrobe() throws IOException {
-        byte[] img1 = "img1".getBytes();
-        byte[] img2 = "img2".getBytes();
+    void deleteClothes() throws IOException {
+        MultipartFile f1 = new MockMultipartFile("files", "a.png", "image/png", "A".getBytes());
+        MultipartFile f2 = new MockMultipartFile("files", "b.png", "image/png", "B".getBytes());
+        MultipartFile f3 = new MockMultipartFile("files", "c.png", "image/png", "C".getBytes());
+        List<String> initial = wardrobeService.saveClothes(user.getId(), Arrays.asList(f1, f2, f3));
 
-        MultipartFile file1 = new MockMultipartFile("files", "x1.png", "image/png", img1);
-        MultipartFile file2 = new MockMultipartFile("files", "x2.png", "image/png", img2);
-        List<String> paths = wardrobeService.saveClothes(user.getId(), List.of(file1, file2));
-        String toDelete = paths.get(0);
-        assertThat(paths).contains(toDelete);
-        assertThat(Files.exists(Path.of(toDelete))).isTrue();
 
-        List<String> remaining = wardrobeService.deleteClothes(user.getId(), toDelete);
-        assertThat(remaining).doesNotContain(toDelete);
-        assertThat(Files.exists(Path.of(toDelete))).isFalse();
+        List<String> remaining = wardrobeService.deleteClothes(user.getId(), 1);
+        assertThat(remaining).hasSize(2);
+        assertThat(remaining).contains(initial.get(0), initial.get(2));
 
-        Wardrobe updated = wardrobeRepository.findByUserId(user.getId()).orElseThrow();
-        assertThat(updated.getClothesPhotos()).doesNotContain(toDelete);
+        assertThat(Files.exists(Path.of(initial.get(1)))).isFalse();
     }
 
-
     @Test
-    @DisplayName("소장 의류 리소스 제공")
-    void provideClothesResource() throws Exception {
-        // Upload a test image
-        byte[] data = "test-image-content".getBytes();
-        MultipartFile file = new MockMultipartFile(
-                "files", "sample.png", "image/png", data);
-        List<String> paths = wardrobeService.saveClothes(user.getId(), List.of(file));
-        assertFalse(paths.isEmpty());
-        String path = paths.get(0);
+    @DisplayName("소장 의류 제공")
+    void provideClothesResource() throws IOException {
+        byte[] data = "hello".getBytes();
+        MultipartFile file = new MockMultipartFile("files", "hello.txt", "text/plain", data);
+        wardrobeService.saveClothes(user.getId(), List.of(file));
 
-        // Retrieve as Resource
-        Resource resource = wardrobeService.provideClothesResource(user.getId(), 0);
-        assertNotNull(resource);
-        assertTrue(resource.exists());
-
-        // Compare file bytes
-        byte[] expected = Files.readAllBytes(Path.of(path));
-        try (InputStream is = resource.getInputStream()) {
-            byte[] actual = is.readAllBytes();
-            assertArrayEquals(expected, actual);
+        Resource res = wardrobeService.provideClothesResource(user.getId(), 0);
+        assertThat(res.exists()).isTrue();
+        try (InputStream is = res.getInputStream()) {
+            byte[] read = is.readAllBytes();
+            assertThat(read).isEqualTo(data);
         }
     }
 
     @Test
-    @DisplayName("소장 의류 인덱스 적합 테스트")
+    @DisplayName("소장 의류 삭제 시 인덱스 유효성 검사")
+    void deleteClothes_invalidIndex() {
+        assertThrows(IllegalArgumentException.class, () ->
+                wardrobeService.deleteClothes(user.getId(), 5)
+        );
+    }
+
+    @Test
+    @DisplayName("소장 의류 제공 시 인덱스 유효성 검사")
     void provideClothesResource_invalidIndex() {
-        // No files uploaded, index out of bounds
         assertThrows(IllegalArgumentException.class, () ->
                 wardrobeService.provideClothesResource(user.getId(), 1)
         );

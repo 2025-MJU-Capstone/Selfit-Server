@@ -12,14 +12,12 @@ import selfit.selfit.domain.clothes.entity.Clothes;
 import selfit.selfit.domain.clothes.repository.ClothesRepository;
 import selfit.selfit.domain.clothes.service.ClothesService;
 import selfit.selfit.domain.image.ImageFileStorageService;
-import selfit.selfit.domain.wardrobe.entity.Wardrobe;
-import selfit.selfit.domain.wardrobe.repository.WardrobeRepository;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import selfit.selfit.domain.user.entity.User;
+import selfit.selfit.domain.user.repository.UserRepository;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +25,7 @@ public class ClothesServiceImpl implements ClothesService {
 
     @Autowired private final ClothesRepository clothesRepository;
     @Autowired private final ImageFileStorageService imageFileStorageService;
-    @Autowired private final WardrobeRepository wardrobeRepository;
+    @Autowired private final UserRepository userRepository;
 
     /**
      *  담은 옷 저장
@@ -42,8 +40,7 @@ public class ClothesServiceImpl implements ClothesService {
         String filename = imageFileStorageService.store(file);
         String path = imageFileStorageService.getFilePath(filename);
 
-        Wardrobe wardrobe = wardrobeRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("옷장이 존재하지 않습니다."));
+        User user = userRepository.findById(userId).orElseThrow();
 
         // 엔티티 생성
         Clothes clothes = Clothes.builder()
@@ -51,7 +48,7 @@ public class ClothesServiceImpl implements ClothesService {
                 .path(path)
                 .build();
 
-        clothes.setWardrobe(wardrobe);
+        clothes.setUser(user);
 
         clothesRepository.save(clothes);
 
@@ -62,35 +59,45 @@ public class ClothesServiceImpl implements ClothesService {
      *  담은 옷 삭제
      * */
     @Override
-    public String deleteClothes(String path) {
+    public List<String> deleteClothes(Long userId, int index) {
+        List<String> paths = listClothesPathsByUser(userId);
+        if (index < 0 || index >= paths.size()) {
+            throw new IllegalArgumentException("삭제할 옷을 선택하세요.");
+        }
+        String deletePath = paths.get(index);
+        deleteClothesPath(deletePath);
+
+        return listClothesPathsByUser(userId);
+    }
+
+    private void deleteClothesPath(String path) {
         Clothes clothes = clothesRepository.findByPath(path)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이미지 경로입니다: " + path));
-
         clothesRepository.delete(clothes);
-
         imageFileStorageService.delete(path);
+    }
 
-        return path;
+    private List<String> listClothesPathsByUser(Long userId){
+        return clothesRepository.findByUserId(userId).stream()
+                .map(Clothes::getPath)
+                .collect(Collectors.toList());
     }
 
     /**
      * 담은 옷 제공
      */
     @Override
-    public Resource provideClothes(String filePath) {
-        Clothes clothes = clothesRepository.findByPath(filePath)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이미지 경로입니다: " + filePath));
-
-        Path path = Path.of(clothes.getPath());
-        try {
-            Resource resource = new UrlResource(path.toUri());
-            if (resource.exists() && resource.isReadable()) {
-                return resource;
-            } else {
-                throw new IllegalArgumentException("이미지 파일을 읽을 수 없습니다: " + filePath);
-            }
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("잘못된 파일 경로입니다: " + filePath, e);
+    public Resource provideClothes(Long userId, int index) throws MalformedURLException {
+        List<String> clothesPathList = listClothesPathsByUser(userId);
+        if (index < 0 || index >= clothesPathList.size()) {
+            throw new IllegalArgumentException("사진을 선택하세요");
         }
+        String path = clothesPathList.get(index);
+        Path file = Path.of(path);
+        UrlResource resource = new UrlResource(file.toUri());
+        if (resource.exists() && resource.isReadable()) {
+            return resource;
+        }
+        throw new IllegalArgumentException("파일을 찾을 수 없거나 읽을 수 없습니다: " + path);
     }
 }

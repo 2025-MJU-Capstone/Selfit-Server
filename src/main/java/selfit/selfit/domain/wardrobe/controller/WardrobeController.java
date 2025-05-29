@@ -44,11 +44,11 @@ public class WardrobeController {
     /**
      * 소장 의류 삭제
      */
-    @DeleteMapping("/photos")
-    public ApiResult<List<String>> deleteClothesFromWardrobe(@RequestParam("path") String path,
+    @DeleteMapping("/photos/{index}")
+    public ApiResult<List<String>> deleteClothesFromWardrobe(@PathVariable int index,
                                                   @AuthenticationPrincipal CustomUserDetails customUserDetails){
         Long userId = customUserDetails.getId();
-        List<String> remain = wardrobeService.deleteClothes(userId, path);
+        List<String> remain = wardrobeService.deleteClothes(userId, index);
 
         return ApiResult.ok("소장 의류 삭제 완료", remain);
     }

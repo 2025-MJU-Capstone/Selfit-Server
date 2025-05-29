@@ -19,6 +19,7 @@ import selfit.selfit.global.security.springsecurity.CustomUserDetails;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/clothes")
@@ -43,18 +44,22 @@ public class ClothesController {
     /**
      *  담은 옷 삭제
      */
-    @DeleteMapping("/upload")
-    public ApiResult<String> deleteClothes(@RequestParam("path") String filePath) throws IOException{
-        String path = clothesService.deleteClothes(filePath);
-        return ApiResult.ok("담은 옷 삭제", path);
+    @DeleteMapping("/upload/{index}")
+    public ApiResult<List<String>> deleteClothes(@PathVariable int index,
+                                           @AuthenticationPrincipal CustomUserDetails details) throws IOException{
+        Long userId = details.getId();
+        List<String> remain = clothesService.deleteClothes(userId, index);
+        return ApiResult.ok("선택한 사진 삭제 성공", remain);
     }
 
     /**
-     *  담은 옷 제공 (프론트에서 선택한
+     *  담은 옷 제공
      */
-    @GetMapping("/upload")
-    public ResponseEntity<Resource> exportPhoto(@RequestParam("path") String filePath) {
-        Resource resource = clothesService.provideClothes(filePath);
+    @GetMapping("/upload/{index}")
+    public ResponseEntity<Resource> provideClothes(@PathVariable int index,
+                                                   @AuthenticationPrincipal CustomUserDetails userDetails) throws Exception {
+        Long userId = userDetails.getId();
+        Resource resource = clothesService.provideClothes(userId, index);
         // Content-Type 설정
         String contentType;
         try {
@@ -67,7 +72,7 @@ public class ClothesController {
         }
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=clothes_photo")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=clothes_photo"+index)
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(resource);
     }

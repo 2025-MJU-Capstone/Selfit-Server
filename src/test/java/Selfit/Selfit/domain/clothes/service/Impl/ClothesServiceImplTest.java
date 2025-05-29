@@ -1,6 +1,7 @@
 package Selfit.Selfit.domain.clothes.service.Impl;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 //이 어노테이션 속성으로 스프링 애플리케이션 컨텍스트를 로드할 때
@@ -32,10 +35,10 @@ import static org.junit.jupiter.api.Assertions.*;
 //file.upload-dir 프로퍼티를 JVM 시스템 임시 디렉터리(java.io.tmpdir)로 오버라이드합니다.
 //예컨대 Windows에서는 보통 C:\Users\<사용자>\AppData\Local\Temp 가 되고,
 //Linux/macOS에서는 /tmp 등이 됩니다.
-@SpringBootTest(properties = "file.upload-dir=${java.io.tmpdir}")
+@SpringBootTest(properties = "file.upload-dir=${java.io.tmpdir}/cart-test")
 @Transactional
 public class ClothesServiceImplTest {
-    @Autowired private WardrobeRepository wardrobeRepository;
+
     @Autowired private ClothesService clothesService;
     @Autowired private UserRepository userRepository;
     @Autowired private ClothesRepository clothesRepository;
@@ -43,59 +46,79 @@ public class ClothesServiceImplTest {
     // junit5가 매 테스트마다 고유한 임시 디렉터리 tempDir을 생성해 주입.
     @TempDir Path tempDir;
 
+    private User user;
+
     @BeforeEach
-    public void setUp() throws Exception {
-        //사실 resolve("") 는 tempDir 자기 자신을 가리키므로, 이 줄은 tempDir이 존재하지 않을 때 생성해 줍니다.
-        Files.createDirectories(tempDir.resolve(""));
-//        System.setProperty("file.upload-dir", tempDir.resolve("uploads-test").toString());
-        // 이미 springboottest에 properties 설정했으므로 필요 x
-    }
+    void setUp() throws IOException {
+        Path uploadDir = tempDir.resolve("cart-test");
+        Files.createDirectories(uploadDir);
 
-    /**
-     *
-     * 담은 옷 등록, 삭제, 제공
-     */
-    @Test
-    void uploadAndDeleteAndExportByPath() throws IOException {
-        // Upload
-        byte[] data = "test-data".getBytes();
-        MultipartFile file = new MockMultipartFile("file", "test.png", "image/png", data);
-
-        User user = User.builder()
-                .accountId("test1")
-                .password("testpwd")
+        user = User.builder()
+                .accountId("testuser")
+                .password("password")
                 .email("test@example.com")
                 .build();
-        Wardrobe w = Wardrobe.builder()
-                .user(user)
-                .build();
-        user.setWardrobe(w);
+
         userRepository.save(user);
-        wardrobeRepository.save(w);
-        Long userId = user.getId();
+    }
 
-        String path = clothesService.saveClothes(userId, ClothesType.BOTTOM, file);
-        assertNotNull(path);
-        // Verify saved entity
+    @Test
+    @DisplayName("담은 옷 등록")
+    void testSaveClothes() throws IOException {
+        byte[] data = "image-content".getBytes();
+        MultipartFile file = new MockMultipartFile(
+                "file", "item.png", "image/png", data);
+
+        String path = clothesService.saveClothes(user.getId(), ClothesType.BOTTOM, file);
+
+        Path p = Path.of(path);
+        assertThat(Files.exists(p)).isTrue();
+
         Optional<Clothes> opt = clothesRepository.findByPath(path);
-        assertTrue(opt.isPresent());
+        assertThat(opt).isPresent();
+
         Clothes saved = opt.get();
-        assertEquals(ClothesType.BOTTOM, saved.getType());
+        assertThat(saved.getUser().getId()).isEqualTo(user.getId());
+        assertThat(saved.getType()).isEqualTo(ClothesType.BOTTOM);
+        assertThat(saved.getPath()).isEqualTo(path);
+    }
 
-        // Export
-        Resource res = clothesService.provideClothes(path);
-        assertTrue(res.exists());
-        byte[] content = Files.readAllBytes(Path.of(path));
-        byte[] returned;
-        try(InputStream is = res.getInputStream()){
-            returned = is.readAllBytes();
+    @Test
+    @DisplayName("담은 옷 삭제")
+    void testDeleteClothes() throws IOException {
+        MultipartFile f1 = new MockMultipartFile("file", "a.png", "image/png", "A".getBytes());
+        MultipartFile f2 = new MockMultipartFile("file", "b.png", "image/png", "B".getBytes());
+        String path1 = clothesService.saveClothes(user.getId(), ClothesType.BOTTOM, f1);
+        String path2 = clothesService.saveClothes(user.getId(), ClothesType.TOP, f2);
+
+        List<String> remaining = clothesService.deleteClothes(user.getId(), 0);
+        assertThat(remaining).containsExactly(path2);
+
+        assertThat(Files.exists(Path.of(path1))).isFalse();
+
+        assertThat(clothesRepository.findByPath(path1)).isEmpty();
+        assertThat(clothesRepository.findByPath(path2)).isPresent();
+    }
+
+    @Test
+    @DisplayName("담은 옷 제공")
+    void testProvideClothes() throws Exception {
+        byte[] data = "test-data".getBytes();
+        MultipartFile file = new MockMultipartFile("file", "sample.png", "image/png", data);
+        clothesService.saveClothes(user.getId(), ClothesType.BOTTOM, file);
+
+        Resource resource = clothesService.provideClothes(user.getId(), 0);
+        assertThat(resource.exists()).isTrue();
+        try (InputStream is = resource.getInputStream()) {
+            byte[] actual = is.readAllBytes();
+            assertThat(actual).isEqualTo(data);
         }
-        assertArrayEquals(content, returned);
+    }
 
-        // Delete
-        String deleted = clothesService.deleteClothes(path);
-        assertEquals(path, deleted);
-        assertFalse(clothesRepository.findByPath(path).isPresent());
-        assertFalse(Files.exists(Path.of(path)));
+    @Test
+    @DisplayName("담은 옷 제공 인덱스 유효성 검사")
+    void testProvideClothes_invalidIndex() {
+        assertThrows(IllegalArgumentException.class,
+                () -> clothesService.provideClothes(user.getId(), 5));
     }
 }

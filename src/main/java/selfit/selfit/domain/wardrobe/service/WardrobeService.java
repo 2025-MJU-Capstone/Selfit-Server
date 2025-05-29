@@ -14,7 +14,6 @@ import java.util.List;
 @Service
 public interface WardrobeService {
     List<String> saveClothes(Long userId, List<MultipartFile> files);
-    List<String> deleteClothes(Long userId, String photoPath);
-    String provideClothes(Long userId, int index);
+    List<String> deleteClothes(Long userId, int index);
     Resource provideClothesResource(Long userId, int index) throws MalformedURLException;
 }

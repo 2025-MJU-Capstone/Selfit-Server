@@ -59,17 +59,18 @@ public class WardrobeServiceImpl implements WardrobeService {
      * 소장 의류 삭제
      */
     @Override
-    public List<String> deleteClothes(Long userId, String photoPath) {
+    public List<String> deleteClothes(Long userId, int index) {
         Wardrobe wardrobe = wardrobeRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("옷장이 존재하지 않습니다."));
 
         List<String> photos = new ArrayList<>(wardrobe.getClothesPhotos());
-        if (!photos.remove(photoPath)) {
-            throw new IllegalArgumentException("해당 경로의 사진이 존재하지 않습니다: " + photoPath);
+        if (index < 0 || index >= photos.size()) {
+            throw new IllegalArgumentException("삭제할 옷을 지정하세요");
         }
+        String targetPath = photos.remove(index);
 
         // 파일 시스템에서 삭제
-        imageFileStorageService.delete(photoPath);
+        imageFileStorageService.delete(targetPath);
 
         wardrobe.setClothesPhotos(photos);
         wardrobe.setUpdate_date(new Date());
@@ -80,8 +81,7 @@ public class WardrobeServiceImpl implements WardrobeService {
     /**
      * 소장 의류 경로 제공
      */
-    @Override
-    public String provideClothes(Long userId, int index) {
+    private String provideClothes(Long userId, int index) {
         Wardrobe wardrobe = wardrobeRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("옷장이 존재하지 않습니다."));
 
