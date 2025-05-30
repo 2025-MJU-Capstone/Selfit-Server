@@ -2,8 +2,10 @@ package selfit.selfit.domain.body.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import selfit.selfit.domain.body.dto.BodySizeDto;
 import selfit.selfit.domain.user.entity.User;
-
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Date;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -12,31 +14,45 @@ import java.util.Date;
 @Setter
 @Table(name = "Body")
 public class Body {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String face;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
+
     private String height;
     private String weight;
     private String waist;
-    private String photo;
+    private String leg;
+    private String shoulder;
+    private String pelvis;
+    private String chest;
 
+    @ElementCollection
+    @CollectionTable(name = "full_body_photos",
+            joinColumns = @JoinColumn(name = "body_id"))
+    @Column(name = "full_body_path", nullable = false)
+    private List<String> fullBodyPhotos = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "face_photos",
+            joinColumns = @JoinColumn(name = "body_id"))
+    @Column(name = "face_path", nullable = false)
+    private List<String> facePhotos = new ArrayList<>();
+
+    @Column(name="create_date", nullable=false)
     private Date create_date;
+
+    @Column(name="update_date", nullable=false)
     private Date update_date;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
     @Builder
-    public Body(String face, String height, String weight, String waist, String photo, User user) {
-        this.face = face;
-        this.height = height;
-        this.weight = weight;
-        this.waist = waist;
-        this.photo = photo;
-        this.user = user;
+    public Body(User user) {
+        this.user       = user;
         this.create_date = new Date();
         this.update_date = new Date();
     }
+
 }

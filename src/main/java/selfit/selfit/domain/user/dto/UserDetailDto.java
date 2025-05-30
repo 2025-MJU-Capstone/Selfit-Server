@@ -9,19 +9,19 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class UserDetailDto {
-    //필요한 요소 있으면 추가해서 사용.
+    // 개인정보 등록 시 사용하는 DTO
+
     private String name;
     private int age;
-    private String email;
     private String nickname;
     private String gender;
 
     @Builder
-    public UserDetailDto(String name, String email, String nickname, String gender, int age) {
+    public UserDetailDto(String name, String nickname, String gender, int age) {
         this.name = name;
-        this.email = email;
         this.nickname = nickname;
         this.gender = gender;
         this.age = age;
     }
+
 }
