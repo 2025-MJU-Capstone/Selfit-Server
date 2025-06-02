@@ -31,14 +31,6 @@ public class User {
     private LocalDateTime create_date;
     private LocalDateTime update_date;
 
-//    @OneToMany(
-//            mappedBy = "user",
-//            cascade   = CascadeType.ALL,
-//            orphanRemoval = true,
-//            fetch     = FetchType.LAZY
-//    )
-//    private List<Wardrobe> wardrobe = new ArrayList<>();
-
     @OneToOne(
             mappedBy = "user",
             cascade   = CascadeType.ALL,
