@@ -64,10 +64,7 @@ public class BodyServiceImpl implements BodyService {
                 .orElseGet(() -> Body.builder().user(user).build());
 
         List<String> storedPaths = files.stream()
-                .map(file -> {
-                    String filename = imageFileStorageService.store(file);
-                    return imageFileStorageService.getFilePath(filename);
-                })
+                .map(imageFileStorageService::store)
                 .collect(Collectors.toList());
 
         setFullBodyPhotos(body, storedPaths);
@@ -96,10 +93,7 @@ public class BodyServiceImpl implements BodyService {
                 .orElseThrow(() -> new IllegalArgumentException("신체 정보가 존재하지 않습니다."));
 
         List<String> storedPaths = files.stream()
-                .map(file -> {
-                    String filename = imageFileStorageService.store(file);
-                    return imageFileStorageService.getFilePath(filename);
-                })
+                .map(imageFileStorageService::store)
                 .collect(Collectors.toList());
 
         setFacePhotos(body, storedPaths);
