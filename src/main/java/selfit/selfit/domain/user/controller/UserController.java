@@ -28,7 +28,7 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "잘못된 입력 값"),
             @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
-    @PostMapping("/detail")
+    @PostMapping("/detail-form")
     public ApiResult<UserDetailDto> registerDetailInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails,
                                               @RequestBody UserDetailDto userDetailDto) {
         // 로그인 한 사용자는 jwt를 통해 securityContext에 저장되었으므로

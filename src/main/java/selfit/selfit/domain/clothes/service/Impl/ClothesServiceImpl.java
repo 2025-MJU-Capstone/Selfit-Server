@@ -100,4 +100,9 @@ public class ClothesServiceImpl implements ClothesService {
         }
         throw new IllegalArgumentException("파일을 찾을 수 없거나 읽을 수 없습니다: " + path);
     }
+
+    @Override
+    public List<String> findClothesAll(Long userId) {
+        return listClothesPathsByUser(userId);
+    }
 }

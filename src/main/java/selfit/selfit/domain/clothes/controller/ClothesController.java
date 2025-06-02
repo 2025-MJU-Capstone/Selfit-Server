@@ -91,4 +91,12 @@ public class ClothesController {
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(resource);
     }
+    @PostMapping("/upload-list")
+    public ApiResult<List<String>> findClothesList(@AuthenticationPrincipal CustomUserDetails customUserDetails){
+
+        Long userId = customUserDetails.getId();
+        List<String> remain = clothesService.findClothesAll(userId);
+
+        return ApiResult.ok("담은 의류 목록", remain);
+    }
 }

@@ -66,7 +66,6 @@ public class WardrobeServiceImpl implements WardrobeService {
         if (index < 0 || index >= paths.size()) {
             throw new IllegalArgumentException("삭제할 옷을 선택하세요.");
         }
-
         String deletePath = paths.get(index);
 
         // 파일 시스템에서 삭제
@@ -116,6 +115,11 @@ public class WardrobeServiceImpl implements WardrobeService {
         } else {
             throw new IllegalArgumentException("파일을 읽을 수 없습니다: " + path);
         }
+    }
+
+    @Override
+    public List<String> findWardrobeAll(Long userId) {
+        return listClothesPathsByUserFromWardrobe(userId);
     }
 
 }

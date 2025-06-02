@@ -97,4 +97,11 @@ public class WardrobeController {
                 .body(resource);
     }
 
+    @PostMapping("/photos-list")
+    public ApiResult<List<String>> findWardrobeList(@AuthenticationPrincipal CustomUserDetails customUserDetails){
+        Long userId = customUserDetails.getId();
+        List<String> remain = wardrobeService.findWardrobeAll(userId);
+
+        return ApiResult.ok("소장 의류 목록", remain);
+    }
 }

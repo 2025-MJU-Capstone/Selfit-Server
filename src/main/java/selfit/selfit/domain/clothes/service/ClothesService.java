@@ -15,5 +15,5 @@ public interface ClothesService {
     String saveClothes(Long userId, ClothesType type, MultipartFile file);
     List<String> deleteClothes(Long userId, int index);
     Resource provideClothes(Long userId, int index) throws MalformedURLException;
-//    Resource provideClothes(String filePath);
+    List<String> findClothesAll(Long userId);
 }
