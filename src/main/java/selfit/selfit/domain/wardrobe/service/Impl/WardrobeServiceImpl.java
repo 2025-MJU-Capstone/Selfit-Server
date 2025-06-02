@@ -7,8 +7,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import selfit.selfit.domain.clothes.entity.Clothes;
 import selfit.selfit.domain.clothes.repository.ClothesRepository;
 import selfit.selfit.domain.image.ImageFileStorageService;
+import selfit.selfit.domain.user.entity.User;
+import selfit.selfit.domain.user.repository.UserRepository;
 import selfit.selfit.domain.wardrobe.entity.Wardrobe;
 import selfit.selfit.domain.wardrobe.repository.WardrobeRepository;
 import selfit.selfit.domain.wardrobe.service.WardrobeService;
@@ -24,35 +27,34 @@ import java.util.stream.Collectors;
 public class WardrobeServiceImpl implements WardrobeService {
 
     @Autowired private final WardrobeRepository wardrobeRepository;
-    @Autowired private final ClothesRepository clothesRepository;
+    @Autowired private final UserRepository userRepository;
     @Autowired private final ImageFileStorageService imageFileStorageService;
 
     /**
      * 소장 의류 등록
      */
     @Override
-    public List<String> saveClothes(Long userId, List<MultipartFile> files) {
-        if (files == null || files.isEmpty()) {
+    public String saveClothes(Long userId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("최소 1장의 옷 사진을 업로드해야 합니다.");
         }
-
-        // 사용자 옷장 조회 또는 새로 생성
-        Wardrobe wardrobe = wardrobeRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("옷장 정보가 존재하지 않습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
 
         // 파일 저장 및 절대 경로 획득
-        List<String> paths = files.stream()
-                .map(file -> {
-                    String filename = imageFileStorageService.store(file);
-                    return imageFileStorageService.getFilePath(filename);
-                })
-                .collect(Collectors.toList());
+        String filename = imageFileStorageService.store(file);
+        String path = imageFileStorageService.getFilePath(filename);
 
-        wardrobe.setClothesPhotos(paths);
+
+        Wardrobe wardrobe = Wardrobe.builder()
+                .user(user)
+                .path(path)
+                .build();
+
         wardrobe.setUpdate_date(new Date());
         wardrobeRepository.save(wardrobe);
 
-        return paths;
+        return path;
     }
 
     /**
@@ -60,36 +62,43 @@ public class WardrobeServiceImpl implements WardrobeService {
      */
     @Override
     public List<String> deleteClothes(Long userId, int index) {
-        Wardrobe wardrobe = wardrobeRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("옷장이 존재하지 않습니다."));
-
-        List<String> photos = new ArrayList<>(wardrobe.getClothesPhotos());
-        if (index < 0 || index >= photos.size()) {
-            throw new IllegalArgumentException("삭제할 옷을 지정하세요");
+        List<String> paths = listClothesPathsByUserFromWardrobe(userId);
+        if (index < 0 || index >= paths.size()) {
+            throw new IllegalArgumentException("삭제할 옷을 선택하세요.");
         }
-        String targetPath = photos.remove(index);
+
+        String deletePath = paths.get(index);
 
         // 파일 시스템에서 삭제
-        imageFileStorageService.delete(targetPath);
+        imageFileStorageService.delete(deletePath);
 
-        wardrobe.setClothesPhotos(photos);
+        // 소장 의류 탐색
+        Wardrobe wardrobe = wardrobeRepository.findByPath(deletePath)
+                .orElseThrow();
+
+        // 소장 의류 제거
+        wardrobeRepository.delete(wardrobe);
         wardrobe.setUpdate_date(new Date());
-        wardrobeRepository.save(wardrobe);
-        return photos;
+
+        return listClothesPathsByUserFromWardrobe(userId);
+    }
+
+
+    public List<String> listClothesPathsByUserFromWardrobe(Long userId){
+        return wardrobeRepository.findByUserId(userId).stream()
+                .map(Wardrobe::getPath)
+                .collect(Collectors.toList());
     }
 
     /**
      * 소장 의류 경로 제공
      */
     private String provideClothes(Long userId, int index) {
-        Wardrobe wardrobe = wardrobeRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("옷장이 존재하지 않습니다."));
-
-        List<String> photos = new ArrayList<>(wardrobe.getClothesPhotos());
-        if (index < 0 || index >= photos.size()) {
+        List<String> clothesPathListFromWardrobe = listClothesPathsByUserFromWardrobe(userId);
+        if (index < 0 || index >= clothesPathListFromWardrobe.size()) {
             throw new IllegalArgumentException("올바른 사진 인덱스를 선택하세요: " + index);
         }
-        return photos.get(index);
+        return clothesPathListFromWardrobe.get(index);
     }
 
     /**

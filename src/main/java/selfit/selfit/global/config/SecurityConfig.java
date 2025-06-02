@@ -69,7 +69,7 @@ public class SecurityConfig{
                         .requestMatchers("/oauth2/authorization/kakao").permitAll()
                         // 카카오 콜백 URI
                         .requestMatchers("/oauth2/login/kakao").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll() // 회원가입, 로그인은 인증 없이 가능
+                        .requestMatchers("/api/auth/**").permitAll() // 회원가입, 로그인은 인증 없이 가능
                         .anyRequest().authenticated()   // 그외의 모든 url은 인증 필요
                 )
                 .sessionManagement(sm->sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

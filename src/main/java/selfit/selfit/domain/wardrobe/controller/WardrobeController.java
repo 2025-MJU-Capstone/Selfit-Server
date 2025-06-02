@@ -42,12 +42,12 @@ public class WardrobeController {
             }
     )
     @PostMapping("/photos")
-    public ApiResult<List<String>> registerClothesFromWardrobe(@RequestParam("file") List<MultipartFile> files,
+    public ApiResult<String> registerClothesFromWardrobe(@RequestParam("file") MultipartFile file,
                                                               @AuthenticationPrincipal CustomUserDetails customUserDetails){
         Long userId = customUserDetails.getId();
-        List<String> paths = wardrobeService.saveClothes(userId, files);
+        String path = wardrobeService.saveClothes(userId, file);
 
-        return ApiResult.ok("소장 의류 등록 완료", paths);
+        return ApiResult.ok("소장 의류 등록 완료", path);
     }
 
     @Operation(summary = "소장 의류 삭제", description = "사용자가 소장한 의류 중 index 위치의 사진을 삭제하고, 남은 사진 경로 리스트를 반환합니다.",

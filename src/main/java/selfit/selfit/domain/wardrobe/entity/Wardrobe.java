@@ -13,7 +13,7 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Table(name = "Wardrobe")
+@Table(name = "Wardrobe") // 소장 의류
 public class Wardrobe {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,19 +25,17 @@ public class Wardrobe {
     @Column(name = "update_date", nullable = false)
     private Date update_date;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ElementCollection
-    @CollectionTable(name = "clothes_photos",
-            joinColumns = @JoinColumn(name = "wardrobe_id"))
-    @Column(name = "clothes_path", nullable = false)
-    private List<String> clothesPhotos = new ArrayList<>();
+    @Column(name = "path", nullable = false)
+    private String path;
 
     @Builder
-    public Wardrobe(User user) {
+    public Wardrobe(User user, String path) {
         this.user = user;
+        this.path = path;
         this.create_date = new Date();
         this.update_date = new Date();
     }

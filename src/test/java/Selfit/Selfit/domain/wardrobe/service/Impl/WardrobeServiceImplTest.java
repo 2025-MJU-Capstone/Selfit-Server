@@ -17,6 +17,7 @@ import selfit.selfit.domain.user.entity.User;
 import selfit.selfit.domain.user.repository.UserRepository;
 import selfit.selfit.domain.wardrobe.entity.Wardrobe;
 import selfit.selfit.domain.wardrobe.repository.WardrobeRepository;
+import selfit.selfit.domain.wardrobe.service.Impl.WardrobeServiceImpl;
 import selfit.selfit.domain.wardrobe.service.WardrobeService;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Transactional
 public class WardrobeServiceImplTest {
 
+    @Autowired private WardrobeServiceImpl wardrobeServiceImpl;
     @Autowired private WardrobeService wardrobeService;
     @Autowired private UserRepository userRepository;
     @Autowired private WardrobeRepository wardrobeRepository;
@@ -48,7 +51,6 @@ public class WardrobeServiceImplTest {
         // configure upload directory
         Path uploadDir = tempDir.resolve("wardrobe-test");
         Files.createDirectories(uploadDir);
-        System.setProperty("file.upload-dir", uploadDir.toString());
 
         // create test user and wardrobe
         user = User.builder()
@@ -56,29 +58,20 @@ public class WardrobeServiceImplTest {
                 .password("password")
                 .email("test@example.com")
                 .build();
-        Wardrobe w = Wardrobe.builder().user(user).build();
-        user.setWardrobe(w);
         userRepository.save(user);
-        wardrobeRepository.save(w);
     }
 
     @Test
     @DisplayName("소장 의류 등록")
     void saveClothes() throws IOException {
         MultipartFile f1 = new MockMultipartFile("files", "one.png", "image/png", "data1".getBytes());
-        MultipartFile f2 = new MockMultipartFile("files", "two.jpg", "image/jpeg", "data2".getBytes());
-        List<MultipartFile> files = Arrays.asList(f1, f2);
 
-        List<String> paths = wardrobeService.saveClothes(user.getId(), files);
+        String paths = wardrobeService.saveClothes(user.getId(), f1);
 
-        assertThat(paths).hasSize(2);
+        assertThat(Files.exists(Path.of(paths))).isTrue();
 
-        for (String p : paths) {
-            assertThat(Files.exists(Path.of(p))).isTrue();
-        }
-
-        Wardrobe updated = wardrobeRepository.findByUserId(user.getId()).orElseThrow();
-        assertThat(updated.getClothesPhotos()).containsExactlyElementsOf(paths);
+        List<Wardrobe> updated = wardrobeRepository.findByUserId(user.getId());
+        assertThat(updated.get(0).getPath()).isEqualTo(paths);
     }
 
     @Test
@@ -87,14 +80,21 @@ public class WardrobeServiceImplTest {
         MultipartFile f1 = new MockMultipartFile("files", "a.png", "image/png", "A".getBytes());
         MultipartFile f2 = new MockMultipartFile("files", "b.png", "image/png", "B".getBytes());
         MultipartFile f3 = new MockMultipartFile("files", "c.png", "image/png", "C".getBytes());
-        List<String> initial = wardrobeService.saveClothes(user.getId(), Arrays.asList(f1, f2, f3));
 
+        String initial1 = wardrobeService.saveClothes(user.getId(), f1);
+        String initial2 = wardrobeService.saveClothes(user.getId(), f2);
+        String initial3 = wardrobeService.saveClothes(user.getId(), f3);
+
+
+        List<String> paths = wardrobeRepository.findByUserId(user.getId()).stream()
+                .map(Wardrobe::getPath)
+                .toList();
 
         List<String> remaining = wardrobeService.deleteClothes(user.getId(), 1);
         assertThat(remaining).hasSize(2);
-        assertThat(remaining).contains(initial.get(0), initial.get(2));
+        assertThat(remaining).contains(initial1, initial3);
 
-        assertThat(Files.exists(Path.of(initial.get(1)))).isFalse();
+        assertThat(Files.exists(Path.of(initial2))).isFalse();
     }
 
     @Test
@@ -102,7 +102,7 @@ public class WardrobeServiceImplTest {
     void provideClothesResource() throws IOException {
         byte[] data = "hello".getBytes();
         MultipartFile file = new MockMultipartFile("files", "hello.txt", "text/plain", data);
-        wardrobeService.saveClothes(user.getId(), List.of(file));
+        wardrobeService.saveClothes(user.getId(), file);
 
         Resource res = wardrobeService.provideClothesResource(user.getId(), 0);
         assertThat(res.exists()).isTrue();

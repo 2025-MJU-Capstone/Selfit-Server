@@ -6,6 +6,8 @@ import selfit.selfit.domain.body.entity.Body;
 import selfit.selfit.domain.wardrobe.entity.Wardrobe;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -29,13 +31,13 @@ public class User {
     private LocalDateTime create_date;
     private LocalDateTime update_date;
 
-    @OneToOne(
-            mappedBy = "user",
-            cascade   = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch     = FetchType.LAZY
-    )
-    private Wardrobe wardrobe;
+//    @OneToMany(
+//            mappedBy = "user",
+//            cascade   = CascadeType.ALL,
+//            orphanRemoval = true,
+//            fetch     = FetchType.LAZY
+//    )
+//    private List<Wardrobe> wardrobe = new ArrayList<>();
 
     @OneToOne(
             mappedBy = "user",

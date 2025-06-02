@@ -13,6 +13,7 @@ import selfit.selfit.domain.user.entity.User;
 import selfit.selfit.global.dto.ApiResult;
 import selfit.selfit.global.security.springsecurity.CustomUserDetails;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
 

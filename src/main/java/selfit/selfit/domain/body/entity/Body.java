@@ -30,13 +30,15 @@ public class Body {
     private String pelvis;
     private String chest;
 
-    @ElementCollection
+    // 컨트롤러 응답 직전에 session이 끊겨 EAGER로 변경
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "full_body_photos",
             joinColumns = @JoinColumn(name = "body_id"))
     @Column(name = "full_body_path", nullable = false)
     private List<String> fullBodyPhotos = new ArrayList<>();
 
-    @ElementCollection
+    // 컨트롤러 응답 직전에 session이 끊겨 EAGER로 변경
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "face_photos",
             joinColumns = @JoinColumn(name = "body_id"))
     @Column(name = "face_path", nullable = false)
