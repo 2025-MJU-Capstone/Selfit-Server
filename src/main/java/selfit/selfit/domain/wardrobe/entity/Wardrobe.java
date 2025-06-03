@@ -23,7 +23,7 @@ public class Wardrobe {
     @Column(name = "update_date", nullable = false)
     private Date update_date;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
