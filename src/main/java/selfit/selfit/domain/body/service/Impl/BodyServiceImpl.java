@@ -16,6 +16,7 @@ import selfit.selfit.domain.user.repository.UserRepository;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,7 +39,23 @@ public class BodyServiceImpl implements BodyService {
     public Body saveSize(Long userId, BodySizeDto bodySizeDto) {
         User user = getUserByUserId(userId);
 
-        Body body = Body.builder()
+        Optional<Body> bodyOpt = bodyRepository.findByUser(user);
+
+        if (bodyOpt.isPresent()) {
+            Body body = bodyOpt.get();
+            body.setWeight(bodySizeDto.getWeight());
+            body.setHeight(bodySizeDto.getHeight());
+            body.setLeg(bodySizeDto.getLeg());
+            body.setWaist(bodySizeDto.getWaist());
+            body.setPelvis(bodySizeDto.getPelvis());
+            body.setShoulder(bodySizeDto.getShoulder());
+            body.setChest(bodySizeDto.getChest());
+
+            return bodyRepository.save(body);
+        }
+
+        Body newBody = Body.builder()
+                .user(user)
                 .weight(bodySizeDto.getWeight())
                 .leg(bodySizeDto.getLeg())
                 .chest(bodySizeDto.getChest())
@@ -48,9 +65,9 @@ public class BodyServiceImpl implements BodyService {
                 .height(bodySizeDto.getHeight())
                 .build();
 
-        user.setBody(body);
+        user.setBody(newBody);
         userRepository.save(user);
-        return bodyRepository.save(body);
+        return bodyRepository.save(newBody);
     }
 
     public void setSize(Body body, BodySizeDto dto){
