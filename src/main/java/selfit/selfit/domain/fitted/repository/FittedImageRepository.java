@@ -7,5 +7,5 @@ import selfit.selfit.domain.user.entity.User;
 import java.util.List;
 
 public interface FittedImageRepository extends JpaRepository<FittedImage, Integer> {
-    List<FittedImage> findAllByUserOrderByUpdate_dateDesc(User user);
+    List<FittedImage> findAllByUserOrderByUpdateDateDesc(User user);
 }
