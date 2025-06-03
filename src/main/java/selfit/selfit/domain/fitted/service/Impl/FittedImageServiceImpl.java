@@ -70,7 +70,7 @@ public class FittedImageServiceImpl implements FittedImageService {
     public List<FittedImageDto> fittingList (Long userId){
         User user = getUserByUserId(userId);
 
-        List<FittedImage> list = fittedImageRepository.findAllByUserOrderByUpdate_dateDesc(user);
+        List<FittedImage> list = fittedImageRepository.findAllByUserOrderByUpdateDateDesc(user);
 
         List<FittedImageDto> fittedImageDtoList = list.stream()
                 .limit(5)
