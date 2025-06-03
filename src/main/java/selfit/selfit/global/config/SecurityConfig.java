@@ -77,7 +77,7 @@ public class SecurityConfig{
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/clothes/delete").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/wardrobe/delete").permitAll()
-
+                        .requestMatchers("/proxy/**").permitAll()
                         // 그 외는 인증 필요
                         .anyRequest().authenticated()
                 )
