@@ -49,8 +49,15 @@ public class Body {
     private Date update_date;
 
     @Builder
-    public Body(User user) {
+    public Body(User user, String height, String weight, String waist, String leg, String shoulder, String pelvis, String chest) {
         this.user       = user;
+        this.height       = height;
+        this.weight       = weight;
+        this.waist        = waist;
+        this.leg        = leg;
+        this.shoulder    = shoulder;
+        this.pelvis     = pelvis;
+        this.chest      = chest;
         this.create_date = new Date();
         this.update_date = new Date();
     }

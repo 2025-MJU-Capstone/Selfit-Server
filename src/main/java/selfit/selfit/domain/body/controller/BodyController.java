@@ -64,4 +64,33 @@ public class BodyController {
         bodyService.saveSize(userId, bodySizeDto);
         return ApiResult.ok("신체 정보 등록 완료", bodySizeDto);
     }
+
+    @Operation(summary = "유저 신체 정보 사진기반 분석", description = "신체 사이즈를 업데이트 합니다. male, female",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "성공적으로 변경"),
+                    @ApiResponse(responseCode = "400", description = "잘못된 입력 값"),
+                    @ApiResponse(responseCode = "500", description = "서버 오류 발생")
+            })
+    @PostMapping("/size/photo")
+    public ApiResult<BodySizeDto> saveSize(@RequestParam String gender,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails){
+        Long userId = customUserDetails.getId();
+        BodySizeDto bodySizeDto = bodyService.saveSizePhoto(userId, gender);
+
+        return ApiResult.ok("신체 정보 분석 완료", bodySizeDto);
+    }
+
+    @Operation(summary = "유저 신체 3D get", description = "유저 신체 3d를 얻습니다. url 형태 반환, 사진 등록 선 필수",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "성공적으로 변경"),
+                    @ApiResponse(responseCode = "400", description = "잘못된 입력 값"),
+                    @ApiResponse(responseCode = "500", description = "서버 오류 발생")
+            })
+    @PostMapping("/3d")
+    public ApiResult<String> saveSize(@AuthenticationPrincipal CustomUserDetails customUserDetails){
+        Long userId = customUserDetails.getId();
+        String result = bodyService.body3D(userId);
+
+        return ApiResult.ok("신체 3D 제공", result);
+    }
 }

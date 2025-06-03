@@ -74,27 +74,14 @@ public class SecurityConfig{
                         ).permitAll()
 
                         // 기존 허용 경로 유지
-                        .requestMatchers("/oauth2/authorization/kakao").permitAll()
-                        .requestMatchers("/oauth2/login/kakao").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/clothes/delete").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/wardrobe/delete").permitAll()
 
                         // 그 외는 인증 필요
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2Login(oauth2 -> oauth2
-                        .authorizationEndpoint(ae -> ae
-                                .baseUri("/oauth2/authorization/{registrationId}")
-                        )
-                        .redirectionEndpoint(re -> re
-                                .baseUri("/oauth2/login/*")
-                        )
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
-                        )
-                        .successHandler(oAuth2LoginSuccessHandler)
-                        .failureHandler(oAuth2LoginFailureHandler)
-                )
                 .addFilterBefore(new JwtAuthenticationFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

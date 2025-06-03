@@ -47,8 +47,7 @@ public class ClothesController {
             @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
     @DeleteMapping("/delete")
-    public ApiResult<String> deleteClothes(@RequestParam String imageURL,
-                                                 @AuthenticationPrincipal CustomUserDetails details) throws IOException{
+    public ApiResult<String> deleteClothes(@RequestParam String imageURL) throws IOException{
         clothesService.deleteClothes(imageURL);
         return ApiResult.ok("선택한 사진 삭제 성공");
     }

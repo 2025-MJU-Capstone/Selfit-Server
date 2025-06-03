@@ -63,6 +63,8 @@ public class ImageFileStorageService {
         try {
             URL parsedUrl = new URL(url);
             String key = parsedUrl.getPath().substring(1); // /file.jpg → file.jpg
+            System.out.println("삭제 시도 URL: " + url);
+            System.out.println("삭제 대상 key: " + key);
 
             DeleteObjectRequest request = DeleteObjectRequest.builder()
                     .bucket(bucketName)
@@ -72,6 +74,8 @@ public class ImageFileStorageService {
             s3Client.deleteObject(request);
             System.out.println("S3 파일 삭제 성공: " + key);
         } catch (Exception e) {
+            System.err.println("S3 파일 삭제 실패: " + url);
+            e.printStackTrace(); // 추가!
             throw new RuntimeException("S3 파일 삭제 실패: " + url, e);
         }
     }

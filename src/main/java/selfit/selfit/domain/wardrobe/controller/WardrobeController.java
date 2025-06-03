@@ -48,8 +48,7 @@ public class WardrobeController {
             }
     )
     @DeleteMapping("/delete")
-    public ApiResult<String> deleteClothesFromWardrobe(@RequestParam String imageURL,
-                                                       @AuthenticationPrincipal CustomUserDetails details){
+    public ApiResult<String> deleteClothesFromWardrobe(@RequestParam String imageURL){
         wardrobeService.deleteClothes(imageURL);
 
         return ApiResult.ok("소장 의류 삭제 완료");

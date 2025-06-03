@@ -1,7 +1,9 @@
 package selfit.selfit.domain.body.service.Impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import selfit.selfit.domain.body.dto.BodySizeDto;
 import selfit.selfit.domain.body.entity.Body;
@@ -13,6 +15,7 @@ import selfit.selfit.domain.user.repository.UserRepository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,10 +38,16 @@ public class BodyServiceImpl implements BodyService {
     public Body saveSize(Long userId, BodySizeDto bodySizeDto) {
         User user = getUserByUserId(userId);
 
-        Body body = bodyRepository.findByUser(user)
-                .orElseThrow(() -> new IllegalArgumentException("신체 정보가 없습니다."));
+        Body body = Body.builder()
+                .weight(bodySizeDto.getWeight())
+                .leg(bodySizeDto.getLeg())
+                .chest(bodySizeDto.getChest())
+                .waist(bodySizeDto.getWaist())
+                .pelvis(bodySizeDto.getPelvis())
+                .shoulder(bodySizeDto.getShoulder())
+                .height(bodySizeDto.getHeight())
+                .build();
 
-        setSize(body, bodySizeDto);
         user.setBody(body);
         userRepository.save(user);
         return bodyRepository.save(body);
@@ -106,32 +115,76 @@ public class BodyServiceImpl implements BodyService {
         body.getFacePhotos().addAll(paths);
         body.setUpdate_date(new Date());
     }
-//
-//    @Override
-//    public List<FaceFileDto> uploadFaceFiles(Long userId, List<MultipartFile> files) {
-//        if(files==null||files.isEmpty()){
-//            throw new IllegalArgumentException("최소 한 장의 사진을 업로드해야 합니다.");
-//        }
-//
-//        User user = getUserByUserId(userId);
-//
-//        Body body = bodyRepository.findByUser(user)
-//                .orElseThrow(() -> new IllegalArgumentException("신체 정보가 없습니다."));
-//
-//        List<FaceFileDto> result = files.stream().map(file->{
-//            try{
-//                String filename = imageFileStorageService.store(file);
-//                String path = imageFileStorageService.getFilePath(filename);
-//                // entity에 경로 추가
-//                body.addFaceFile(path);
-//                return new FaceFileDto(filename, path);
-//            }catch (Exception e){
-//                throw new RuntimeException("파일 저장 실패: " + file.getOriginalFilename(), e);
-//            }
-//        }).collect(Collectors.toList());
-//
-//        bodyRepository.save(body);
-//        return result;
-//    }
 
+    public BodySizeDto saveSizePhoto(Long userId, String gender) {
+        User user = getUserByUserId(userId);
+        Body body = bodyRepository.findByUser(user)
+                .orElseThrow(() -> new IllegalArgumentException("신체 정보가 없습니다."));
+
+        List<String> photos = body.getFullBodyPhotos();
+        if (photos == null || photos.isEmpty()) {
+            throw new IllegalArgumentException("전신 사진이 존재하지 않습니다.");
+        }
+        String imageUrl = photos.get(0);
+
+        RestTemplate restTemplate = new RestTemplate();
+        String pythonApiUrl = "http://localhost:8000/body?gender=" + gender + "&image_url=" + imageUrl;
+
+        ResponseEntity<Map> response = restTemplate.getForEntity(pythonApiUrl, Map.class);
+        Map measurements = response.getBody();
+
+        String hipCircum;
+        String chestCircum;
+
+        if (gender == "male"){
+            hipCircum = measurements.get("male_waist_circum").toString();
+            chestCircum = measurements.get("male_chest_circum").toString();
+        } else {
+            hipCircum = measurements.get("female_waist_circum").toString();
+            chestCircum = measurements.get("female_chest_circum").toString();
+        }
+
+        BodySizeDto dto = new BodySizeDto();
+        dto.setHeight(String.valueOf(body.getHeight()));
+        dto.setWeight(String.valueOf(body.getWeight()));
+        assert measurements != null;
+        dto.setWaist(hipCircum);
+        dto.setLeg(String.valueOf(measurements.get("left_leg_cm")));
+        dto.setShoulder(String.valueOf(measurements.get("shoulder_width_cm")));
+        dto.setPelvis(String.valueOf(measurements.get("hip_width_cm")));
+        dto.setChest(chestCircum);
+
+        body.setWaist(hipCircum);
+        body.setLeg(String.valueOf(measurements.get("left_leg_cm")));
+        body.setShoulder(String.valueOf(measurements.get("shoulder_width_cm")));
+        body.setPelvis(String.valueOf(measurements.get("hip_width_cm")));
+        body.setChest(chestCircum);
+        body.setUpdate_date(new Date());
+        bodyRepository.save(body);
+
+        return dto;
+    }
+
+    public String body3D(Long userId){
+        User user = getUserByUserId(userId);
+
+        Body body = bodyRepository.findByUser(user)
+                .orElseThrow(() -> new IllegalArgumentException("신체 정보가 없습니다."));
+
+        List<String> photos = body.getFullBodyPhotos();
+        if (photos == null || photos.isEmpty()) {
+            throw new IllegalArgumentException("전신 사진이 존재하지 않습니다.");
+        }
+        String imageUrl = photos.get(0);
+
+        RestTemplate restTemplate = new RestTemplate();
+        String pythonApiUrl = "http://localhost:8000/body/3D?body_image_url=" + imageUrl;
+
+        ResponseEntity<Map> response = restTemplate.getForEntity(pythonApiUrl, Map.class);
+        Map measurements = response.getBody();
+
+        String modelUrl = (String) measurements.get("model_url");
+
+        return modelUrl;
+    }
 }

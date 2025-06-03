@@ -12,7 +12,7 @@ import java.util.List;
 public interface BodyService {
     Body saveSize(Long userId, BodySizeDto bodySizeDto);
     List<String> uploadFullBody(User user, List<MultipartFile> files);
-
+    BodySizeDto saveSizePhoto(Long userId, String gender);
     List<String> uploadFace(User user, List<MultipartFile> files);
-//    List<FaceFileDto> uploadFaceFiles(Long userId, List<MultipartFile> files);
+    String body3D(Long userId);
 }
