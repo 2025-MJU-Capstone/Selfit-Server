@@ -15,6 +15,8 @@ public class FittedImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "fitted_url", length = 2048)
     private String fitted_url;
 
     private Date createDate;
