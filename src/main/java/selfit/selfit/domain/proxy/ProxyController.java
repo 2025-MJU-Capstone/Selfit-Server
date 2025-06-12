@@ -19,7 +19,7 @@ public class ProxyController {
         ResponseEntity<byte[]> response = restTemplate.getForEntity(url, byte[].class);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentType(MediaType.parseMediaType("model/gltf-binary"));
         headers.setContentLength(response.getBody().length);
 
         return new ResponseEntity<>(new ByteArrayResource(response.getBody()), headers, HttpStatus.OK);
