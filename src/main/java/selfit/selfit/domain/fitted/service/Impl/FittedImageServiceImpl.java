@@ -35,7 +35,7 @@ public class FittedImageServiceImpl implements FittedImageService {
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
     }
 
-    public FittedImageDto fitting3D (Long userId, String clothPath){
+    public String fitting3D (Long userId, String clothPath){
         User user = getUserByUserId(userId);
 
         Body body = bodyRepository.findByUser(user)
@@ -53,10 +53,6 @@ public class FittedImageServiceImpl implements FittedImageService {
         ResponseEntity<Map> response = restTemplate.getForEntity(pythonApiUrl, Map.class);
         Map measurements = response.getBody();
 
-        FittedImageDto fittedImageDto = new FittedImageDto();
-        fittedImageDto.setFitted_3D_url(measurements.get("model_url").toString());
-        fittedImageDto.setFitted_2D_url(measurements.get("image_2d").toString());
-
         FittedImage fittedImage = FittedImage.builder()
                 .fitted_url(measurements.get("model_url").toString())
                 .user(user)
@@ -64,19 +60,19 @@ public class FittedImageServiceImpl implements FittedImageService {
 
         fittedImageRepository.save(fittedImage);
 
-        return fittedImageDto;
+        return measurements.get("model_url").toString();
     }
 
-    public List<FittedImageDto> fittingList (Long userId){
+    public List<String> fittingList(Long userId) {
         User user = getUserByUserId(userId);
 
         List<FittedImage> list = fittedImageRepository.findAllByUserOrderByUpdateDateDesc(user);
 
-        List<FittedImageDto> fittedImageDtoList = list.stream()
+        List<String> fittedUrlList = list.stream()
                 .limit(5)
-                .map(FittedImageDto::from)
+                .map(FittedImage::getFitted_url)
                 .toList();
 
-        return fittedImageDtoList;
+        return fittedUrlList;
     }
 }

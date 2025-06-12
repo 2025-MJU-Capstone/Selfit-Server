@@ -152,14 +152,15 @@ public class BodyServiceImpl implements BodyService {
 
         String hipCircum;
         String chestCircum;
-
-        if (gender == "male"){
-            hipCircum = measurements.get("male_waist_circum").toString();
-            chestCircum = measurements.get("male_chest_circum").toString();
-        } else {
-            hipCircum = measurements.get("female_waist_circum").toString();
-            chestCircum = measurements.get("female_chest_circum").toString();
-        }
+        hipCircum = measurements.get("waist_circum_cm").toString();
+        chestCircum = measurements.get("chest_circum_cm").toString();
+//        if (gender == "male"){
+//            hipCircum = measurements.get("male_waist_circum").toString();
+//            chestCircum = measurements.get("male_chest_circum").toString();
+//        } else {
+//            hipCircum = measurements.get("female_waist_circum").toString();
+//            chestCircum = measurements.get("female_chest_circum").toString();
+//        }
 
         BodySizeDto dto = new BodySizeDto();
         dto.setHeight(String.valueOf(body.getHeight()));
