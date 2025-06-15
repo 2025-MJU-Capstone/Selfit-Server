@@ -7,6 +7,6 @@ import java.util.List;
 
 @Service
 public interface FittedImageService {
-    String fitting3D (Long userId, String clothPath);
-    List<String> fittingList (Long userId);
+    FittedImageDto fitting3D (Long userId, String clothPath);
+    List<FittedImageDto> fittingList (Long userId);
 }

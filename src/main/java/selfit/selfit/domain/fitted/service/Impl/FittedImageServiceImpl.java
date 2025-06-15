@@ -35,7 +35,7 @@ public class FittedImageServiceImpl implements FittedImageService {
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
     }
 
-    public String fitting3D (Long userId, String clothPath){
+    public FittedImageDto fitting3D (Long userId, String clothPath){
         User user = getUserByUserId(userId);
 
         Body body = bodyRepository.findByUser(user)
@@ -55,24 +55,29 @@ public class FittedImageServiceImpl implements FittedImageService {
 
         FittedImage fittedImage = FittedImage.builder()
                 .fitted_url(measurements.get("model_url").toString())
+                .fitted_url_2d(measurements.get("image_2d").toString())
                 .user(user)
                 .build();
 
         fittedImageRepository.save(fittedImage);
 
-        return measurements.get("model_url").toString();
+        return FittedImageDto.builder()
+                .fitted_2D_url(measurements.get("image_2d").toString())
+                .fitted_3D_url(measurements.get("model_url").toString())
+                .build();
     }
 
-    public List<String> fittingList(Long userId) {
+    public List<FittedImageDto> fittingList(Long userId) {
         User user = getUserByUserId(userId);
 
         List<FittedImage> list = fittedImageRepository.findAllByUserOrderByUpdateDateDesc(user);
 
-        List<String> fittedUrlList = list.stream()
+        return list.stream()
                 .limit(5)
-                .map(FittedImage::getFitted_url)
+                .map(fittedImage -> FittedImageDto.builder()
+                        .fitted_2D_url(fittedImage.getFitted_url_2d())
+                        .fitted_3D_url(fittedImage.getFitted_url())
+                        .build())
                 .toList();
-
-        return fittedUrlList;
     }
 }
